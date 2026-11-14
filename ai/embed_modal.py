@@ -2,7 +2,7 @@
 
 Turns sentences into 768-number vectors so ghosts can be searched by meaning.
 
-  Test on the sample file:
+  Test on the sample file (no database needed):
       modal run embed_modal.py --file sentences_fi.txt
 
   Fill sentence_vec in MariaDB (needs DB_URL in .env and `pip install mariadb python-dotenv`):
@@ -23,6 +23,9 @@ from pathlib import Path
 import modal
 
 MODEL_ID = "google/embeddinggemma-300m"
+# GPUs need a payment method or credits on the Modal account. Until then this runs on CPU,
+# which is fine for this small model. Change to "T4" once the account allows GPUs.
+GPU = None
 DIM = 768
 CHUNK = 256  # sentences sent to the GPU per call
 
@@ -30,7 +33,8 @@ app = modal.App("ghosts-embed")
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
-    .pip_install("sentence-transformers>=5.1.0", "torch", "fastapi[standard]")
+    .pip_install("torch", index_url="https://download.pytorch.org/whl/cpu" if GPU is None else None)
+    .pip_install("sentence-transformers>=5.1.0", "fastapi[standard]")
 )
 # The model is downloaded once into this volume, then reused on every start.
 cache = modal.Volume.from_name("ghosts-hf-cache", create_if_missing=True)
@@ -38,7 +42,8 @@ cache = modal.Volume.from_name("ghosts-hf-cache", create_if_missing=True)
 
 @app.cls(
     image=image,
-    gpu="T4",
+    gpu=GPU,
+    cpu=4.0,
     secrets=[modal.Secret.from_name("huggingface")],
     volumes={"/cache": cache},
     scaledown_window=300,   # stay warm 5 minutes after the last call
