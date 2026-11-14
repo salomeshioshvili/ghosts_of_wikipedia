@@ -183,9 +183,22 @@ def connect():
     return shared_connect()
 
 
-def run_db(page_id) -> None:
+def run_db(page_id, living_only: bool = False, ghosts_only: bool = False) -> None:
     conn, cur = connect()
-    if page_id:
+    if page_id and living_only:
+        # Current article text only (what the EN toggle shows first) — much smaller than full history.
+        cur.execute(
+            "SELECT DISTINCT s.hash, s.text_fi FROM sentence s "
+            "JOIN sentence_life AS l ON l.hash = s.hash "
+            "WHERE l.page_id = ? AND s.text_en IS NULL", (page_id,))
+    elif page_id and ghosts_only:
+        # Deleted/rewritten lines (the dashed boxes), not every historical version.
+        cur.execute(
+            "SELECT DISTINCT s.hash, s.text_fi FROM sentence s "
+            "JOIN sentence_life FOR SYSTEM_TIME ALL AS l ON l.hash = s.hash "
+            "WHERE l.page_id = ? AND l.kind IN ('erased', 'rewritten') AND s.text_en IS NULL",
+            (page_id,))
+    elif page_id:
         cur.execute(
             "SELECT DISTINCT s.hash, s.text_fi FROM sentence s "
             "JOIN sentence_life FOR SYSTEM_TIME ALL AS l ON l.hash = s.hash "
@@ -215,11 +228,15 @@ if __name__ == "__main__":
     ap.add_argument("--file", help="text file with one Finnish sentence per line")
     ap.add_argument("--db", action="store_true", help="fill sentence.text_en in MariaDB")
     ap.add_argument("--page", type=int, help="with --db: only this page_id (e.g. 1150)")
+    ap.add_argument("--living", action="store_true",
+                    help="with --db --page: only sentences alive in the current article")
+    ap.add_argument("--ghosts", action="store_true",
+                    help="with --db --page: only erased/rewritten sentences (dashed boxes)")
     args = ap.parse_args()
     if not API_KEY:
         raise SystemExit("FEATHERLESS_API_KEY is missing from .env")
     if args.db:
-        run_db(args.page)
+        run_db(args.page, living_only=args.living, ghosts_only=args.ghosts)
     elif args.file:
         run_file(args.file)
     else:

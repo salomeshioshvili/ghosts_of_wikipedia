@@ -122,7 +122,7 @@ export type LangMode = 'both' | 'fi' | 'en'
 
 export type Biography = {
   page_id: number
-  chapters: Array<{ ts: string; caption_en: string; rev_ids: number[] }>
+  chapters: Array<{ ts: string; caption_en: string; caption_fi?: string | null; rev_ids: number[] }>
   audio_url?: string | null
 }
 

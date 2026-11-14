@@ -6,14 +6,16 @@
       "caption_en": "The article is created, stating that the Finnish Civil War was fought between the Reds and the Whites.",
       "rev_ids": [
         1408
-      ]
+      ],
+      "caption_fi": "Artikkeli luodaan ja siinä todetaan, että Suomen sisällissota (Civil War) käytiin punaisten ja valkoisten välillä."
     },
     {
       "ts": "2004-10-17T07:28:20Z",
       "caption_en": "A section is added to discuss the various names of the conflict, including 'War of Freedom (vapaussota)' and 'Class War (luokkasota)'.",
       "rev_ids": [
         64717
-      ]
+      ],
+      "caption_fi": "Artikkeliin lisätään osio konfliktin eri nimistä, mukaan lukien 'vapaussota (War of Freedom)' ja 'luokkasota (Class War)'."
     },
     {
       "ts": "2005-09-01T07:57:01Z",
@@ -21,7 +23,8 @@
       "rev_ids": [
         401926,
         451918
-      ]
+      ],
+      "caption_fi": "Artikkeli kasvaa nopeasti syyskuussa 2005, laajentuen noin 67 000 merkkiin."
     },
     {
       "ts": "2008-04-13T14:43:26Z",
@@ -29,14 +32,16 @@
       "rev_ids": [
         4626735,
         4626748
-      ]
+      ],
+      "caption_fi": "Muokkaaja muuttaa lyhyesti otsikon muotoon 'vapaussota (War of Freedom)', mutta muutos kumotaan kahden minuutin kuluessa."
     },
     {
       "ts": "2009-04-07T11:31:31Z",
       "caption_en": "Between 2006 and 2009, the page is wiped and restored four times, including one instance involving 145,000 characters.",
       "rev_ids": [
         6535198
-      ]
+      ],
+      "caption_fi": "Vuosien 2006 ja 2009 välillä sivu tyhjennetään ja palautetaan neljä kertaa, mukaan lukien kerta, jossa oli 145 000 merkkiä."
     },
     {
       "ts": "2012-05-07T19:57:24Z",
@@ -45,14 +50,16 @@
         11596668,
         11596717,
         11596847
-      ]
+      ],
+      "caption_fi": "Muokkaaja yrittää korvata useissa otsikoissa sanan 'sisällissota (Civil War)' sanalla 'vapaussota (War of Freedom)', mutta muutokset kumotaan."
     },
     {
       "ts": "2015-11-08T10:21:10Z",
       "caption_en": "About 17,000 characters are removed as the timeline is moved to its own separate article.",
       "rev_ids": [
         15323305
-      ]
+      ],
+      "caption_fi": "Noin 17 000 merkkiä poistetaan, kun aikajana siirretään omaksi erilliseksi artikkelikseen."
     },
     {
       "ts": "2019-11-05T18:22:04Z",
@@ -60,14 +67,16 @@
       "rev_ids": [
         18517752,
         18517756
-      ]
+      ],
+      "caption_fi": "Toinen yritys nimetä osio muotoon 'vapaussota (War of Freedom)' kumotaan minuutin kuluttua."
     },
     {
       "ts": "2026-09-12T12:48:07Z",
       "caption_en": "The article now contains nearly 200,000 characters and has undergone over 3,300 versions.",
       "rev_ids": [
         24234990
-      ]
+      ],
+      "caption_fi": "Artikkeli sisältää nyt lähes 200 000 merkkiä ja siitä on tehty yli 3 300 versiota."
     }
   ],
   "audio_url": null

@@ -216,21 +216,23 @@ def find_events(rows: list) -> list:
 
 SYSTEM = """You narrate the life story of a Finnish Wikipedia article for a 60-second time-lapse.
 You receive its turning points as JSON: dates, sizes and what changed. Write one caption per
-turning point, in English.
+turning point, in BOTH Finnish and English.
 
 Rules:
 - One or two short sentences per caption, at most 30 words. Calm documentary tone, present tense.
 - Use only the facts given. Do not invent numbers, motives or people.
-- Never name or describe individual editors. "An editor" or "editors" is enough.
+- Never name or describe individual editors. "An editor" / "eräs muokkaaja" is enough.
 - Be neutral about the war: report what changed, do not take sides on names or events.
-- Translate any Finnish heading or summary you quote, and keep the Finnish word in brackets,
-  e.g. "War of Freedom (vapaussota)".
-- Sizes are in bytes; say "characters" and round them (about 10,000 characters).
+- For English: translate Finnish headings you quote and keep the Finnish word in brackets,
+  e.g. "War of Freedom (vapaussota)". For Finnish captions, use the Finnish names naturally.
+- Sizes are in bytes; say "characters" / "merkkiä" and round them (about 10,000 characters).
 
-Reply with ONLY a JSON array: [{"i": number, "caption_en": text}, ...], one per turning point."""
+Reply with ONLY a JSON array:
+[{"i": number, "caption_fi": text, "caption_en": text}, ...], one per turning point."""
 
 
 def narrate(title: str, events: list) -> list:
+    """Returns list of {"caption_fi", "caption_en"} aligned with events."""
     key = os.environ.get("FEATHERLESS_API_KEY", "")
     if not key:
         raise SystemExit("FEATHERLESS_API_KEY is missing from the repo .env")
@@ -239,7 +241,7 @@ def narrate(title: str, events: list) -> list:
         for i, e in enumerate(events)]}
     for attempt in range(5):
         r = requests.post(API_URL, headers={"Authorization": f"Bearer {key}"}, timeout=300, json={
-            "model": MODEL, "temperature": 0.3, "max_tokens": 3000,
+            "model": MODEL, "temperature": 0.3, "max_tokens": 4000,
             "messages": [{"role": "system", "content": SYSTEM},
                          {"role": "user", "content": json.dumps(payload, ensure_ascii=False, default=str)}]})
         if r.status_code in (429, 500, 502, 503, 504):
@@ -248,7 +250,14 @@ def narrate(title: str, events: list) -> list:
         r.raise_for_status()
         reply = r.json()["choices"][0]["message"]["content"]
         rows = json.loads(reply[reply.find("["):reply.rfind("]") + 1])
-        captions = {int(x["i"]): str(x["caption_en"]).strip() for x in rows}
+        captions = {
+            int(x["i"]): {
+                "caption_fi": str(x["caption_fi"]).strip(),
+                "caption_en": str(x["caption_en"]).strip(),
+            }
+            for x in rows
+            if x.get("caption_fi") and x.get("caption_en")
+        }
         if set(captions) == set(range(len(events))):
             return [captions[i] for i in range(len(events))]
         print("  reply missed some turning points; asking again")
@@ -271,7 +280,9 @@ def main():
 
     captions = narrate(rows[-1]["title"], events)
     out = {"page_id": args.page,
-           "chapters": [{"ts": e["ts"].strftime("%Y-%m-%dT%H:%M:%SZ"), "caption_en": c, "rev_ids": e["rev_ids"]}
+           "chapters": [{"ts": e["ts"].strftime("%Y-%m-%dT%H:%M:%SZ"),
+                         "caption_fi": c["caption_fi"], "caption_en": c["caption_en"],
+                         "rev_ids": e["rev_ids"]}
                         for e, c in zip(events, captions)],
            "audio_url": None}
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -279,7 +290,7 @@ def main():
     path.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nwrote {path}\n")
     for ch in out["chapters"]:
-        print(f"{ch['ts'][:10]}  {ch['caption_en']}")
+        print(f"{ch['ts'][:10]}  FI: {ch['caption_fi']}\n            EN: {ch['caption_en']}")
 
 
 if __name__ == "__main__":

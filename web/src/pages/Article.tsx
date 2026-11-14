@@ -33,7 +33,7 @@ export function Article() {
 
   const [article, setArticle] = useState<ArticlePayload | null>(null)
   const [timeline, setTimeline] = useState<TimelinePayload | null>(null)
-  const [lang, setLang] = useState<LangMode>('en')
+  const [lang, setLang] = useState<LangMode>('fi')
   const [showGhosts, setShowGhosts] = useState(true)
   const [caught, setCaught] = useState<Set<string>>(new Set())
   const [focusHash, setFocusHash] = useState<string | null>(params.get('ghost'))
@@ -237,11 +237,28 @@ export function Article() {
 
         <article className="article__main">
           <p className="article__howto">the dashed bits got deleted. click one. or smash Play.</p>
-          <h1 className="article__title">{article.title_en ?? article.title_fi}</h1>
-          {article.title_en && <p className="article__title-en">{article.title_fi}</p>}
+          {lang !== 'fi' &&
+            article.sentences.length > 0 &&
+            article.sentences.filter((s) => s.text_en).length < article.sentences.length * 0.5 && (
+              <p className="article__en-hint">
+                English is still being filled in — missing lines stay Finnish until the translate job catches up.
+                Refresh in a few minutes.
+              </p>
+            )}
+          <h1 className="article__title">
+            {lang === 'en' && article.title_en ? article.title_en : article.title_fi}
+          </h1>
+          {lang === 'both' && article.title_en && (
+            <p className="article__title-en">{article.title_en}</p>
+          )}
           <p className="article__asof">{formatDate(timeline.frames[frameIndex]?.ts ?? article.as_of)}</p>
           {bio && bio.chapters.length > 0 && (
-            <Biography data={bio} currentTs={timeline.frames[frameIndex]?.ts} onJump={jumpAfterIso} />
+            <Biography
+              data={bio}
+              lang={lang}
+              currentTs={timeline.frames[frameIndex]?.ts}
+              onJump={jumpAfterIso}
+            />
           )}
 
           {sections.map((section) => (
