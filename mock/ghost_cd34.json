@@ -1,0 +1,68 @@
+{
+  "hash": "cd34",
+  "page_id": 1150,
+  "text_fi": "Suomen vapaussota oli taistelu, jossa valkoiset vapauttivat maan bolševismista vuonna 1918.",
+  "text_en": "Finland's freedom war was a struggle in which the Whites liberated the country from Bolshevism in 1918.",
+  "kind": "erased",
+  "rarity": "rare",
+  "event_tag": "talks about 1918",
+  "lives": [
+    {
+      "born": "2005-02-01T00:00:00Z",
+      "born_rev": 101,
+      "died": "2006-11-03T12:00:00Z",
+      "died_rev": 250,
+      "removed_by": { "user": "HistorianA", "anonymous": false },
+      "edit_summary": "Nimitys epäselvä; pehmennetty",
+      "revert": false
+    },
+    {
+      "born": "2007-04-20T08:00:00Z",
+      "born_rev": 410,
+      "died": "2008-01-15T19:30:00Z",
+      "died_rev": 512,
+      "removed_by": { "user": null, "anonymous": true },
+      "edit_summary": "poisto / remove POV",
+      "revert": false
+    },
+    {
+      "born": "2008-09-01T10:00:00Z",
+      "born_rev": 600,
+      "died": "2009-11-12T16:40:00Z",
+      "died_rev": 880,
+      "removed_by": { "user": "ArchiveKeeper", "anonymous": false },
+      "edit_summary": "Korvattu neutraalimmalla sisällissota-nimityksellä",
+      "revert": false
+    }
+  ],
+  "reincarnated_as": {
+    "hash": "a10002",
+    "text_fi": "Sotaa on kutsuttu myös vapaussodaksi, kansalaissodaksi ja luokkasodaksi eri aikoina ja eri näkökulmista.",
+    "text_en": "The war has also been called a freedom war, a citizens' war and a class war at different times and from different viewpoints.",
+    "similarity": 0.84
+  },
+  "coordination": {
+    "score": 82,
+    "evidence": [
+      {
+        "label": "Dormancy",
+        "value": "3 accounts silent 2+ years",
+        "explain": "Accounts that removed this sentence had been inactive for years, then edited within the same week."
+      },
+      {
+        "label": "Timing",
+        "value": "all within 6 hours",
+        "explain": "Related removals on linked pages clustered inside a six-hour window."
+      },
+      {
+        "label": "Overlap",
+        "value": "removed the same 4 sentences",
+        "explain": "The same group touched the same naming sentences across articles."
+      }
+    ]
+  },
+  "links": {
+    "born": "https://fi.wikipedia.org/?oldid=101",
+    "died": "https://fi.wikipedia.org/?oldid=880"
+  }
+}

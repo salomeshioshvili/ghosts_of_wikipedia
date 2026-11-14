@@ -1,0 +1,93 @@
+{
+  "page_id": 1150,
+  "title_fi": "Suomen sisällissota",
+  "title_en": "Finnish Civil War",
+  "as_of": "2026-09-28T18:40:00Z",
+  "ghost_count": 17,
+  "sentences": [
+    {
+      "hash": "a10001",
+      "text_fi": "Suomen sisällissota oli Suomen senaatin ja Suomen kansanvaltuuskunnan joukkojen välinen sisällissota, joka käytiin 27. tammikuuta – 15. toukokuuta 1918.",
+      "text_en": "The Finnish Civil War was a civil war fought between the forces of the Finnish Senate and the Finnish People's Delegation from 27 January to 15 May 1918.",
+      "section": "Johdanto",
+      "pos": 0,
+      "born": "2006-05-02T10:00:00Z"
+    },
+    {
+      "hash": "a10002",
+      "text_fi": "Sotaa on kutsuttu myös vapaussodaksi, kansalaissodaksi ja luokkasodaksi eri aikoina ja eri näkökulmista.",
+      "text_en": "The war has also been called a freedom war, a citizens' war and a class war at different times and from different viewpoints.",
+      "section": "Nimitys",
+      "pos": 1,
+      "born": "2011-03-18T14:22:00Z"
+    },
+    {
+      "hash": "a10003",
+      "text_fi": "Nykyisessä tutkimuksessa ja yleiskielessä vakiintunut nimitys on sisällissota.",
+      "text_en": "In current research and everyday language, the established name is civil war.",
+      "section": "Nimitys",
+      "pos": 2,
+      "born": "2014-08-09T09:11:00Z"
+    },
+    {
+      "hash": "a10004",
+      "text_fi": "Punaiset joukot koostuivat pääosin työläisistä ja heidän tukijoistaan, valkoiset taas porvarillisista ja maalaisväestöstä.",
+      "text_en": "The Red forces consisted mainly of workers and their supporters, while the Whites came largely from bourgeois and rural populations.",
+      "section": "Osapuolet",
+      "pos": 3,
+      "born": "2007-01-12T08:00:00Z"
+    },
+    {
+      "hash": "a10005",
+      "text_fi": "Sodan seurauksena Suomi säilyi itsenäisenä, mutta yhteiskunta jakautui pitkäksi aikaa.",
+      "text_en": "As a result of the war Finland remained independent, but society stayed divided for a long time.",
+      "section": "Seuraukset",
+      "pos": 4,
+      "born": "2005-09-01T12:00:00Z"
+    }
+  ],
+  "ghosts": [
+    {
+      "hash": "cd34",
+      "text_fi": "Suomen vapaussota oli taistelu, jossa valkoiset vapauttivat maan bolševismista vuonna 1918.",
+      "text_en": "Finland's freedom war was a struggle in which the Whites liberated the country from Bolshevism in 1918.",
+      "section": "Nimitys",
+      "after_hash": "a10001",
+      "born": "2005-02-01T00:00:00Z",
+      "died": "2009-11-12T16:40:00Z",
+      "kind": "erased",
+      "lives": 3,
+      "rarity": "rare",
+      "coordination_score": 82,
+      "event_tag": "talks about 1918"
+    },
+    {
+      "hash": "cd35",
+      "text_fi": "Vapaussodan voitto turvasi Suomen itsenäisyyden idän uhkaa vastaan.",
+      "text_en": "Victory in the freedom war secured Finland's independence against the threat from the east.",
+      "section": "Nimitys",
+      "after_hash": "a10001",
+      "born": "2006-04-11T00:00:00Z",
+      "died": "2011-03-18T14:22:00Z",
+      "kind": "rewritten",
+      "lives": 2,
+      "rarity": "common",
+      "coordination_score": 41,
+      "event_tag": "talks about 1918"
+    },
+    {
+      "hash": "cd36",
+      "text_fi": "Punainen terrori oli systemaattista ja ennalta suunniteltua.",
+      "text_en": "The Red Terror was systematic and planned in advance.",
+      "section": "Osapuolet",
+      "after_hash": "a10004",
+      "born": "2008-07-02T00:00:00Z",
+      "died": "2016-01-22T10:05:00Z",
+      "kind": "erased",
+      "lives": 1,
+      "rarity": "common",
+      "coordination_score": 27,
+      "event_tag": "talks about 1918"
+    }
+  ]
+}
