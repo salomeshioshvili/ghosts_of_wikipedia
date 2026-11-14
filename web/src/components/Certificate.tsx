@@ -1,18 +1,25 @@
-import type { GhostCertificate } from '../lib/types'
+import type { GhostCertificate, LangMode } from '../lib/types'
 import { formatYear } from '../lib/api'
 
 type Props = {
   data: GhostCertificate | null
   open: boolean
+  lang?: LangMode
   onClose: () => void
   onShowWhen: (iso: string) => void
   onTombstone: () => void
 }
 
-export function Certificate({ data, open, onClose, onShowWhen, onTombstone }: Props) {
+export function Certificate({ data, open, lang = 'fi', onClose, onShowWhen, onTombstone }: Props) {
   const last = data?.lives[data.lives.length - 1]
   const who =
     last?.removed_by.anonymous || !last?.removed_by.user ? 'anonymous' : last.removed_by.user
+  const quote =
+    lang === 'en'
+      ? (data?.text_en ?? data?.text_fi)
+      : lang === 'both' && data?.text_en
+        ? `${data.text_fi}\n\n${data.text_en}`
+        : data?.text_fi
 
   return (
     <aside className={`certificate-drawer ${open && data ? 'is-open' : ''}`} aria-hidden={!open}>
@@ -25,7 +32,7 @@ export function Certificate({ data, open, onClose, onShowWhen, onTombstone }: Pr
             </button>
           </div>
 
-          <p className="certificate-drawer__quote">{data.text_en ?? data.text_fi}</p>
+          <p className="certificate-drawer__quote">{quote}</p>
 
           <div className="certificate-meta">
             <p>
@@ -42,7 +49,10 @@ export function Certificate({ data, open, onClose, onShowWhen, onTombstone }: Pr
 
           {data.reincarnated_as && (
             <p className="certificate-reincarnated">
-              came back as: {data.reincarnated_as.text_en ?? data.reincarnated_as.text_fi}
+              came back as:{' '}
+              {lang === 'en'
+                ? (data.reincarnated_as.text_en ?? data.reincarnated_as.text_fi)
+                : data.reincarnated_as.text_fi}
             </p>
           )}
 

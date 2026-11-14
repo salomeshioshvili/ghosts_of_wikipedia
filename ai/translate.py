@@ -33,7 +33,7 @@ load_dotenv()
 API_URL = "https://api.featherless.ai/v1/chat/completions"
 API_KEY = os.environ.get("FEATHERLESS_API_KEY", "")
 MODEL = os.environ.get("TRANSLATE_MODEL", "google/gemma-4-31B-it")
-BATCH = 20          # sentences per request
+BATCH = int(os.environ.get("TRANSLATE_BATCH", "20"))  # sentences per request
 WORKERS = int(os.environ.get("TRANSLATE_WORKERS", "2"))  # parallel requests; plan units / 2
 CACHE_PATH = Path("translations_cache.json")
 

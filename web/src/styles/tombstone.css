@@ -101,3 +101,32 @@
   border-top: 0;
   box-shadow: 6px 6px 0 var(--ink);
 }
+
+.tomb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.tomb-actions__btn {
+  border: 2px solid var(--ink);
+  background: var(--yellow);
+  color: var(--ink);
+  font-weight: 700;
+  padding: 0.45rem 0.85rem;
+}
+
+.tomb-actions__btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.tomb-actions__qr {
+  border: 2px solid var(--ink);
+  background: var(--cream);
+  padding: 0.25rem;
+  line-height: 0;
+}

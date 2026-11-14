@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { toPng } from 'html-to-image'
+import { QRCodeSVG } from 'qrcode.react'
 import { formatYear, getGhost } from '../lib/api'
 import type { GhostCertificate } from '../lib/types'
 import '../styles/tombstone.css'
@@ -7,10 +9,35 @@ import '../styles/tombstone.css'
 export function Tombstone() {
   const { pageId = '1150', hash = 'cd34' } = useParams()
   const [data, setData] = useState<GhostCertificate | null>(null)
+  const [busy, setBusy] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     void getGhost(Number(pageId), hash).then(setData)
   }, [pageId, hash])
+
+  const shareUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/tombstone/${pageId}/${hash}`
+      : `/tombstone/${pageId}/${hash}`
+
+  async function downloadPng() {
+    if (!cardRef.current || busy) return
+    setBusy(true)
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: '#f3efe6',
+      })
+      const a = document.createElement('a')
+      a.href = dataUrl
+      a.download = `ghost-${hash.slice(0, 8)}.png`
+      a.click()
+    } finally {
+      setBusy(false)
+    }
+  }
 
   if (!data) {
     return (
@@ -32,7 +59,7 @@ export function Tombstone() {
         ← back
       </Link>
 
-      <div className="tomb-stack">
+      <div className="tomb-stack" ref={cardRef}>
         <article className="tombstone">
           <p className="tombstone__rip">R.I.P.</p>
 
@@ -54,13 +81,22 @@ export function Tombstone() {
             />
           </svg>
 
-          <h1 className="tombstone__name">{data.text_en ?? data.text_fi}</h1>
+          <h1 className="tombstone__name">{data.text_fi}</h1>
           <p className="tombstone__dates">
             {born}–{died}
           </p>
           <p className="tombstone__epitaph">“{epitaph}”</p>
         </article>
         <div className="tombstone__base" aria-hidden />
+      </div>
+
+      <div className="tomb-actions">
+        <button type="button" className="tomb-actions__btn" onClick={() => void downloadPng()} disabled={busy}>
+          {busy ? 'saving…' : 'download PNG'}
+        </button>
+        <div className="tomb-actions__qr" title="Scan to open this tombstone">
+          <QRCodeSVG value={shareUrl} size={96} bgColor="#f3efe6" fgColor="#121820" level="M" includeMargin />
+        </div>
       </div>
     </main>
   )
