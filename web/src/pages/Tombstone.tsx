@@ -23,7 +23,7 @@ export function Tombstone() {
   const first = data.lives[0]
   const last = data.lives[data.lives.length - 1]
   const born = first ? formatYear(first.born) : '??'
-  const died = last ? formatYear(last.died) : '??'
+  const died = last?.died ? formatYear(last.died) : '??'
   const epitaph = last?.edit_summary?.trim() || 'nobody wrote why'
 
   return (

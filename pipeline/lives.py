@@ -16,24 +16,18 @@ Per page:
  5. ~240 keyframes for the time-lapse, event years per sentence, the article's ghost count.
 """
 import argparse, difflib, json, os, sys, time
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from multiprocessing import Pool
-
-import pyarrow.compute as pc
-import pyarrow.dataset as ds
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import DATA_M, apply_schema, batched_executemany, connect, hero_pages
+from parquet_m import files, naive_utc, read_page
 from textify import sentence_hash, sentences, years
 
 REVERT_WINDOW = timedelta(hours=24)
 FRAMES = 240
 TYPO, REWRITE = 0.9, 0.6
 MAX_COMPARE = 300           # a removed sentence is compared with at most this many added ones
-
-
-def naive_utc(t):
-    return t.astimezone(timezone.utc).replace(tzinfo=None) if t.tzinfo else t
 
 
 # --- 1. Which versions to keep --------------------------------------------------------------------
@@ -123,36 +117,30 @@ def keyframes(snapshots, n=FRAMES):
 
 
 # --- 4-5. One page end to end ---------------------------------------------------------------------
-def read_versions(page_id):
-    """(meta, iterator of (ts, rev, text)) for one page, from the Parquet files."""
-    dataset = ds.dataset(DATA_M, format="parquet")
-    where = pc.field("page_id") == page_id
-    meta_table = dataset.to_table(columns=["timestamp", "rev_id", "sha1"], filter=where).to_pylist()
-    meta = sorted((naive_utc(r["timestamp"]), r["rev_id"], r["sha1"]) for r in meta_table)
+def plan(meta):
+    """meta: [(ts, rev, sha1)] of one page. Sorts, makes times strictly rising, picks versions to keep."""
+    meta = sorted(meta)
     for k in range(1, len(meta)):                           # strictly rising, 1 µs apart if needed
         if meta[k][0] <= meta[k - 1][0]:
             meta[k] = (meta[k - 1][0] + timedelta(microseconds=1),) + meta[k][1:]
-    ts_of = {rev: ts for ts, rev, _ in meta}
     keep, reverts = versions_to_keep(meta)
-
-    def stream():
-        rows = []
-        for batch in dataset.to_batches(columns=["rev_id", "text"], filter=where, batch_size=64):
-            for r in batch.to_pylist():
-                if r["rev_id"] in keep:
-                    rows.append((ts_of[r["rev_id"]], r["rev_id"], r["text"]))
-        rows.sort(key=lambda x: (x[0], x[1]))
-        yield from rows
-    return meta, reverts, stream()
+    return keep, reverts, {rev: ts for ts, rev, _ in meta}
 
 
-def process_page(page_id):
-    t0 = time.time()
-    meta, reverts, versions = read_versions(page_id)
+def read_versions(page_id):
+    """(reverts, sorted list of (ts, rev, text)) for one page, from the Parquet files."""
+    meta = [(naive_utc(r["timestamp"]), r["rev_id"], r["sha1"])
+            for r in read_page(page_id, ["timestamp", "rev_id", "sha1"], batch_size=4096)]
     if not meta:
-        return page_id, 0, 0, 0.0
-    lives, texts, snapshots = lives_of(versions, reverts)
-    con, cur = connect()
+        return set(), []
+    keep, reverts, ts_of = plan(meta)
+    rows = [(ts_of[r["rev_id"]], r["rev_id"], r["text"])
+            for r in read_page(page_id, ["rev_id", "text"]) if r["rev_id"] in keep]
+    return reverts, sorted(rows, key=lambda x: (x[0], x[1]))
+
+
+def write_page(cur, page_id, lives, texts, snapshots):
+    """Write one page's sentences, events, lives (with real times) and keyframes. Returns ghost count."""
     hexh = lambda h: h.hex() if h else None
     batched_executemany(cur, "INSERT IGNORE INTO sentence (hash, text_fi) VALUES (?, ?)",
                         [(h, t) for h, t in texts.items()])
@@ -180,9 +168,59 @@ def process_page(page_id):
                          for ts, rev, order, e, d in keyframes(snapshots)])
     ghosts = sum(1 for l in dead if l["kind"] in ("erased", "rewritten"))
     cur.execute("UPDATE article SET ghost_count = ? WHERE page_id = ?", (ghosts, page_id))
+    return ghosts
+
+
+def process_page(page_id):
+    t0 = time.time()
+    reverts, rows = read_versions(page_id)
+    if not rows:
+        return page_id, 0, 0, 0.0
+    lives, texts, snapshots = lives_of(rows, reverts)
+    con, cur = connect()
+    ghosts = write_page(cur, page_id, lives, texts, snapshots)
     con.commit()
     con.close()
     return page_id, len(lives), ghosts, time.time() - t0
+
+
+def process_file(args):
+    """Every page in one Parquet file, reading the file ONCE (for --all / --files)."""
+    path, skip = args
+    import pyarrow.parquet as pq
+    t0 = time.time()
+    pf = pq.ParquetFile(path)
+    by_page = {}
+    for r in pf.read(columns=["page_id", "timestamp", "rev_id", "sha1"]).to_pylist():
+        by_page.setdefault(r["page_id"], []).append((naive_utc(r["timestamp"]), r["rev_id"], r["sha1"]))
+    plans = {pid: plan(m) for pid, m in by_page.items() if pid not in skip}
+    con, cur = connect()
+    done, n_pages, n_lives, n_ghosts = set(), 0, 0, 0
+    current, buf = None, []
+
+    def flush():
+        nonlocal n_pages, n_lives, n_ghosts
+        if current in plans and current not in done and buf:
+            keep, reverts, _ = plans[current]
+            lives, texts, snapshots = lives_of(sorted(buf, key=lambda x: (x[0], x[1])), reverts)
+            n_ghosts += write_page(cur, current, lives, texts, snapshots)
+            con.commit()
+            n_pages, n_lives = n_pages + 1, n_lives + len(lives)
+            done.add(current)
+            if n_pages % 200 == 0:
+                print(f"    {os.path.basename(path)}: {n_pages:,} pages, {time.time() - t0:.0f} s", flush=True)
+
+    for batch in pf.iter_batches(batch_size=256, columns=["page_id", "rev_id", "text"]):
+        for r in batch.to_pylist():
+            if r["page_id"] != current:
+                flush()
+                current, buf = r["page_id"], []
+            p = plans.get(current)
+            if p and r["rev_id"] in p[0]:
+                buf.append((p[2][r["rev_id"]], r["rev_id"], r["text"]))
+    flush()
+    con.close()
+    return os.path.basename(path), n_pages, n_lives, n_ghosts, time.time() - t0
 
 
 def main():
@@ -190,29 +228,38 @@ def main():
     g = p.add_mutually_exclusive_group(required=True)
     g.add_argument("--pages", type=int, nargs="+")
     g.add_argument("--heroes", action="store_true")
-    g.add_argument("--all", action="store_true")
+    g.add_argument("--all", action="store_true", help="all 19,742 articles, one pass per file")
+    g.add_argument("--files", nargs="+", help="only these Parquet files, e.g. versions-03.parquet")
     p.add_argument("--workers", type=int, default=1)
     p.add_argument("--reset", action="store_true", help="drop and recreate the sentence tables first")
     args = p.parse_args()
 
     con, cur = connect()
     if args.reset:
-        apply_schema(cur, drop=("sentence_life", "sentence", "sentence_event", "article_frame"))
+        apply_schema(cur, drop=("sentence_life", "sentence", "sentence_event", "article_frame", "sentence_move"))
     else:
         apply_schema(cur)
-    if args.all:
-        cur.execute("SELECT page_id FROM article ORDER BY versions DESC")
-        pages = [r[0] for r in cur.fetchall()]
-    else:
-        pages = args.pages or hero_pages()
     cur.execute("SELECT DISTINCT page_id FROM article_frame")
     done = {r[0] for r in cur.fetchall()}
     con.close()
+    t0 = time.time()
+    pool = Pool(args.workers) if args.workers > 1 else None
+    run = pool.imap_unordered if pool else map
+
+    if args.all or args.files:
+        paths = files() if args.all else [os.path.join(DATA_M, f) for f in args.files]
+        paths.sort(key=os.path.getsize, reverse=True)       # biggest first: better parallel balance
+        print(f"{len(paths)} files, {len(done)} pages already loaded (skipped)", flush=True)
+        totals = [0, 0, 0]
+        for name, n_pages, n_lives, n_ghosts, secs in run(process_file, [(pth, frozenset(done)) for pth in paths]):
+            totals = [totals[0] + n_pages, totals[1] + n_lives, totals[2] + n_ghosts]
+            print(f"{name}: {n_pages:,} pages, {n_lives:,} lives, {n_ghosts:,} ghosts, {secs:.0f} s", flush=True)
+        print(f"Done: {totals[0]:,} pages, {totals[1]:,} lives, {totals[2]:,} ghosts in {time.time() - t0:.0f} s")
+        return
+
+    pages = args.pages or hero_pages()
     todo = [pg for pg in pages if pg not in done]
     print(f"{len(todo)} pages to do ({len(pages) - len(todo)} already loaded)", flush=True)
-
-    t0 = time.time()
-    run = Pool(args.workers).imap_unordered if args.workers > 1 else map
     total_lives = total_ghosts = 0
     for k, (page_id, n_lives, n_ghosts, secs) in enumerate(run(process_page, todo), 1):
         total_lives, total_ghosts = total_lives + n_lives, total_ghosts + n_ghosts

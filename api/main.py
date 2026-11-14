@@ -4,7 +4,7 @@
 
 Rules: all times UTC ISO 8601; hashes are hex; never return `user` for anonymous editors.
 """
-import json, os, sys, time
+import json, os, sys, threading, time
 from datetime import datetime
 from functools import lru_cache
 
@@ -62,21 +62,55 @@ def event_tag(y0, y1):
     return f"talks about {y0}" if not y1 or y1 == y0 else f"talks about {y0}–{y1}"
 
 
+_load_lock = threading.Lock()
+
+
+def ensure_loaded(page_id):
+    """First visit to an article that isn't processed yet: process it now from dataset M and store it
+    in MariaDB (lives, ghosts, frames, moves). Every later visit reads the stored result."""
+    if rows("SELECT 1 AS x FROM article_frame WHERE page_id = ? LIMIT 1", (page_id,)):
+        return
+    if not rows("SELECT 1 AS x FROM article WHERE page_id = ?", (page_id,)):
+        raise HTTPException(404, "unknown page_id")
+    with _load_lock:                                      # one load at a time; others wait, then reuse it
+        if rows("SELECT 1 AS x FROM article_frame WHERE page_id = ? LIMIT 1", (page_id,)):
+            return
+        from lives import process_page                   # imported lazily: the API starts without the pipeline
+        from moves import find_moves
+        process_page(page_id)
+        con, cur = connect()
+        try:
+            find_moves(cur, page_id)
+            con.commit()
+        finally:
+            con.close()
+
+
 @app.get("/api/articles")
-def articles(featured: int = 0, limit: int = 12):
-    if featured:
+def articles(featured: int = 0, q: str | None = None, limit: int = 12):
+    """featured=1: the hero cards. q=...: search all 19,742 articles by title (loaded or not)."""
+    loaded = "EXISTS(SELECT 1 FROM article_frame f WHERE f.page_id = a.page_id) AS loaded"
+    if q and q.strip():
+        q = q.strip()
+        like = "%" + q.replace("%", r"\%").replace("_", r"\_") + "%"
+        found = rows(f"""SELECT a.*, {loaded} FROM article a
+            WHERE a.title_fi LIKE ? OR a.title_en LIKE ?
+            ORDER BY (a.title_fi = ?) DESC, (a.title_fi LIKE ?) DESC, a.versions DESC LIMIT ?""",
+                     (like, like, q, q.replace("%", r"\%") + "%", min(limit, 50)))
+    elif featured:
         marks = ",".join("?" * len(FEATURED))
-        found = rows(f"SELECT * FROM article WHERE page_id IN ({marks})", FEATURED)
+        found = rows(f"SELECT a.*, {loaded} FROM article a WHERE a.page_id IN ({marks})", FEATURED)
     else:
-        found = rows("SELECT * FROM article ORDER BY ghost_count DESC LIMIT ?", (limit,))
+        found = rows(f"SELECT a.*, {loaded} FROM article a ORDER BY a.ghost_count DESC LIMIT ?", (limit,))
     return [{"page_id": a["page_id"], "title_fi": a["title_fi"], "title_en": a["title_en"],
-             "ghost_count": a["ghost_count"], "versions": a["versions"],
+             "ghost_count": a["ghost_count"], "versions": a["versions"], "loaded": bool(a["loaded"]),
              "first_edit": iso(a["first_edit"]), "last_edit": iso(a["last_edit"])} for a in found]
 
 
 @app.get("/api/articles/{page_id}")
 def article(page_id: int, as_of: str | None = None, min_days: int = 7):
     """min_days: hide ghosts that lived less than this (edit churn, not history)."""
+    ensure_loaded(page_id)
     when = as_of_param(as_of) or datetime.utcnow()
     meta = rows("SELECT * FROM article WHERE page_id = ?", (page_id,))
     if not meta:
@@ -123,6 +157,7 @@ def article(page_id: int, as_of: str | None = None, min_days: int = 7):
 
 @app.get("/api/articles/{page_id}/timeline")
 def timeline(page_id: int):
+    ensure_loaded(page_id)
     frames = rows("SELECT ts, rev_id, hashes, edits, deaths FROM article_frame WHERE page_id = ? ORDER BY ts",
                   (page_id,))
     if not frames:
@@ -141,6 +176,7 @@ def timeline(page_id: int):
 
 @app.get("/api/ghosts/{page_id}/{hash_hex}")
 def ghost(page_id: int, hash_hex: str):
+    ensure_loaded(page_id)
     lives = rows("""SELECT l.row_start AS born, l.born_rev, l.row_end AS died, l.died_rev, l.kind,
             HEX(l.successor_hash) AS successor, l.similarity,
             rb.user AS born_user, rb.anonymous AS born_anon,

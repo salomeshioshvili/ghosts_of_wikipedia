@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS sentence_life (
   row_end   TIMESTAMP(6) GENERATED ALWAYS AS ROW END INVISIBLE,
   PERIOD FOR SYSTEM_TIME (row_start, row_end),
   PRIMARY KEY (page_id, hash),
-  KEY start_key (page_id, row_start)           -- MariaDB's demo: AS OF on old dates needs this
+  KEY start_key (page_id, row_start),          -- MariaDB's demo: AS OF on old dates needs this
+  KEY hash_key (hash)                          -- moves across articles, search joins
 ) CHARACTER SET utf8mb4 WITH SYSTEM VERSIONING;
 
 -- The years a sentence talks about (event time), next to when Wikipedia said it (system time).

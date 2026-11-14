@@ -30,14 +30,14 @@ export function Certificate({ data, open, onClose, onShowWhen, onTombstone }: Pr
           <div className="certificate-meta">
             <p>
               <strong>
-                {formatYear(data.lives[0].born)}–{formatYear(last.died)}
+                {formatYear(data.lives[0].born)}–{last.died ? formatYear(last.died) : 'now'}
               </strong>
               <span>{data.lives.length} lives</span>
             </p>
             <p>
               removed by <strong>{who}</strong>
             </p>
-            <p className="certificate-meta__summary">“{last.edit_summary}”</p>
+            <p className="certificate-meta__summary">“{last.edit_summary || 'no reason given'}”</p>
           </div>
 
           {data.reincarnated_as && (
@@ -60,7 +60,7 @@ export function Certificate({ data, open, onClose, onShowWhen, onTombstone }: Pr
           )}
 
           <div className="certificate-actions">
-            <button type="button" className="primary" onClick={() => onShowWhen(last.died)}>
+            <button type="button" className="primary" onClick={() => onShowWhen(last.died ?? data.lives[0].born)}>
               jump to that day
             </button>
             <button type="button" onClick={onTombstone}>

@@ -38,15 +38,21 @@ export function Article() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [frameIndex, setFrameIndex] = useState(0)
   const [playing, setPlaying] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
-    void Promise.all([getArticle(Number(pageId)), getTimeline(Number(pageId))]).then(
-      ([a, t]) => {
+    setArticle(null)
+    setTimeline(null)
+    setLoadError(null)
+    // The first visit to an article processes its whole edit history on the server, so this can take a while.
+    void getArticle(Number(pageId))
+      .then((a) => Promise.all([a, getTimeline(Number(pageId))]))
+      .then(([a, t]) => {
         setArticle(a)
         setTimeline(t)
         setFrameIndex(Math.max(t.frames.length - 1, 0))
-      },
-    )
+      })
+      .catch((e: unknown) => setLoadError(e instanceof Error ? e.message : String(e)))
   }, [pageId])
 
   useEffect(() => {
@@ -109,13 +115,16 @@ export function Article() {
     const byAfter = new Map<string, GhostSummary[]>()
     if (showGhosts) {
       for (const g of visible.ghosts) {
-        const list = byAfter.get(g.after_hash) ?? []
+        const key = g.after_hash ?? ''
+        const list = byAfter.get(key) ?? []
         list.push(g)
-        byAfter.set(g.after_hash, list)
+        byAfter.set(key, list)
       }
     }
 
     const out: Block[] = []
+    const top = byAfter.get('')            // ghosts that stood before the first living sentence
+    if (top?.length) out.push({ type: 'ghosts', afterHash: '', ghosts: top })
     for (const sentence of visible.sentences) {
       out.push({ type: 'living', sentence })
       const ghosts = byAfter.get(sentence.hash)
@@ -154,8 +163,23 @@ export function Article() {
     setPlaying(false)
   }
 
+  if (loadError) {
+    return (
+      <main style={{ padding: '3rem' }}>
+        <p>The ghosts wouldn't come: {loadError}</p>
+        <Link to="/">← home</Link>
+      </main>
+    )
+  }
   if (!article || !timeline) {
-    return <main style={{ padding: '3rem' }}>Opening the archive…</main>
+    return (
+      <main style={{ padding: '3rem' }}>
+        <p>Summoning ghosts…</p>
+        <p style={{ opacity: 0.7, fontSize: '0.9rem' }}>
+          The first visit reads this article's whole edit history. Big articles take a minute; after that it's instant.
+        </p>
+      </main>
+    )
   }
 
   return (

@@ -15,7 +15,8 @@ import searchHits from '../../../mock/search.json'
 import stats from '../../../mock/stats.json'
 import biography1150 from '../../../mock/biography_1150.json'
 
-const USE_MOCK = true
+// Real API by default; run `VITE_USE_MOCK=1 npm run dev` for the mock files.
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === '1'
 
 async function fromApi<T>(path: string): Promise<T> {
   const res = await fetch(path)
@@ -26,6 +27,17 @@ async function fromApi<T>(path: string): Promise<T> {
 export async function getFeaturedArticles(): Promise<FeaturedArticle[]> {
   if (USE_MOCK) return articlesFeatured as FeaturedArticle[]
   return fromApi('/api/articles?featured=1')
+}
+
+/** Search all 19,742 articles by title. `loaded: false` = its ghosts are summoned on first open. */
+export async function searchArticles(q: string): Promise<FeaturedArticle[]> {
+  if (USE_MOCK) {
+    const needle = q.trim().toLowerCase()
+    return (articlesFeatured as FeaturedArticle[]).filter(
+      (a) => a.title_fi.toLowerCase().includes(needle) || a.title_en?.toLowerCase().includes(needle),
+    )
+  }
+  return fromApi(`/api/articles?q=${encodeURIComponent(q)}&limit=20`)
 }
 
 export async function getStats(): Promise<Stats> {
@@ -89,7 +101,7 @@ export async function searchGhosts(q: string): Promise<SearchHit[]> {
       (h) =>
         h.text_en?.toLowerCase().includes(needle) ||
         h.text_fi.toLowerCase().includes(needle) ||
-        h.title_en.toLowerCase().includes(needle),
+        (h.title_en ?? '').toLowerCase().includes(needle),
     )
   }
   return fromApi(`/api/search?q=${encodeURIComponent(q)}`)

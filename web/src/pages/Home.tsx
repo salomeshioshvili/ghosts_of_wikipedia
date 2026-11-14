@@ -60,8 +60,8 @@ export function Home() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') onHunt()
               }}
-              placeholder="search..."
-              aria-label="Search deleted text"
+              placeholder="an article, or something Wikipedia once said..."
+              aria-label="Search articles by title, or deleted text by meaning"
             />
             <button type="button" onClick={onHunt}>
               go
