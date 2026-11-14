@@ -8,3 +8,5 @@ web/dist/
 *.log
 .idea/
 .vscode/
+translations_cache.json
+translations.json
