@@ -4,7 +4,7 @@
 
 Rules: all times UTC ISO 8601; hashes are hex; never return `user` for anonymous editors.
 """
-import json, os, sys, threading, time
+import json, os, re, sys, threading, time
 from datetime import datetime
 from functools import lru_cache
 
@@ -18,6 +18,11 @@ from common import connect  # noqa: E402
 
 app = FastAPI(title="Ghosts of Wikipedia")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# Same story, every language: live cross-language comparison (api/languages.py).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from languages import router as languages_router  # noqa: E402
+app.include_router(languages_router)
 
 FEATURED = (1150, 1256, 6021)            # 1918 war, Winter War, Mannerheim
 GHOST_KINDS = ("erased", "rewritten")
@@ -49,6 +54,20 @@ def rows(sql, params=()):
         return [dict(zip(names, r)) for r in cur.fetchall()]
     finally:
         con.close()
+
+
+_IP = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b|\b(?:[0-9a-fA-F]{1,4}:){3,7}[0-9a-fA-F]{1,4}\b")
+_LINK = re.compile(r"\[\[(?:[^\]|]*\|)?([^\]]*)\]\]")
+
+
+def clean_summary(text):
+    """Edit summaries as readable text, with no IP addresses (anonymous editors stay anonymous)."""
+    if not text:
+        return None
+    text = _LINK.sub(lambda m: m.group(1), text)
+    text = _IP.sub("an anonymous editor", text)
+    text = re.sub(r"/\*\s*(.*?)\s*\*/", r"\1:", text)          # /* Section */ -> Section:
+    return re.sub(r"\s+", " ", text).strip(" :") or None
 
 
 def who(user, anonymous):
@@ -211,7 +230,7 @@ def ghost(page_id: int, hash_hex: str):
             "lives": [{"born": iso(l["born"]), "born_rev": l["born_rev"], "born_by": who(l["born_user"], l["born_anon"]),
                        "died": iso(alive_end(l["died"])), "died_rev": l["died_rev"],
                        "removed_by": who(l["died_user"], l["died_anon"]) if l["died_rev"] else None,
-                       "edit_summary": l["comment"], "revert": bool(l["is_revert"]),
+                       "edit_summary": clean_summary(l["comment"]), "revert": bool(l["is_revert"]),
                        "moved_to": {"page_id": l["moved_to"], "title_fi": l["moved_title"]} if l["moved_to"] else None}
                       for l in lives],
             "reincarnated_as": reincarnated,

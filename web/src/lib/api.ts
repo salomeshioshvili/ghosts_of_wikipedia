@@ -5,6 +5,8 @@ import type {
   SearchHit,
   Stats,
   TimelinePayload,
+  Biography,
+  LangCompare,
 } from './types'
 
 import articlesFeatured from '../../../mock/articles_featured.json'
@@ -107,9 +109,14 @@ export async function searchGhosts(q: string): Promise<SearchHit[]> {
   return fromApi(`/api/search?q=${encodeURIComponent(q)}`)
 }
 
-export async function getBiography(pageId: number) {
-  if (USE_MOCK) return biography1150
-  return fromApi(`/api/articles/${pageId}/biography`)
+/** The article's life story, or null when Gemma hasn't written one for it yet. */
+export async function getBiography(pageId: number): Promise<Biography | null> {
+  if (USE_MOCK) return pageId === 1150 ? (biography1150 as Biography) : null
+  try {
+    return await fromApi<Biography>(`/api/articles/${pageId}/biography`)
+  } catch {
+    return null
+  }
 }
 
 export function formatYear(iso: string): string {
@@ -123,4 +130,32 @@ export function formatDate(iso: string): string {
     day: 'numeric',
     timeZone: 'UTC',
   })
+}
+
+/** Same story, every language: live comparison of one article across Wikipedia editions. */
+export async function compareLanguages(title: string, lang = 'fi', refresh = false): Promise<LangCompare> {
+  const q = new URLSearchParams({ title, lang })
+  if (refresh) q.set('refresh', '1')
+  return fromApi(`/api/languages?${q}`)
+}
+
+/** Second step: Gemma's English meanings for the titles, first sentences and rename reasons. */
+export async function languageMeanings(title: string, lang = 'fi'): Promise<LangCompare> {
+  return fromApi(`/api/languages/meanings?${new URLSearchParams({ title, lang })}`)
+}
+
+/** The latest comparison stored in MariaDB (null if none in the last 24 h). */
+export async function savedComparison(title: string, lang = 'fi'): Promise<LangCompare | null> {
+  const res = await fetch(`/api/languages/saved?${new URLSearchParams({ title, lang })}`)
+  return res.ok ? ((await res.json()) as LangCompare) : null
+}
+
+/** Store a comparison computed in the browser (a new system-versioned row in MariaDB). */
+export async function saveComparison(title: string, lang: string, report: LangCompare): Promise<void> {
+  const res = await fetch('/api/languages/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, lang, report }),
+  })
+  if (!res.ok) throw new Error(`save failed: ${res.status}`)
 }

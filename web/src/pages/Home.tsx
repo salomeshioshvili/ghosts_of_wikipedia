@@ -67,6 +67,11 @@ export function Home() {
               go
             </button>
           </div>
+
+          <Link className="home__languages" to="/languages?lang=fi&title=Suomen%20sisällissota">
+            Same story, every language →
+            <span>what each Wikipedia calls a war, and where it fought about the name</span>
+          </Link>
         </div>
       </section>
 
@@ -75,7 +80,7 @@ export function Home() {
         <div className="home__cards">
           {articles.map((a) => (
             <Link className="haunt-card" key={a.page_id} to={`/article/${a.page_id}`}>
-              <h3 className="haunt-card__fi">{a.title_en}</h3>
+              <h3 className="haunt-card__fi">{a.title_en ?? a.title_fi}</h3>
               <p className="haunt-card__count">{a.ghost_count} ghosts</p>
             </Link>
           ))}

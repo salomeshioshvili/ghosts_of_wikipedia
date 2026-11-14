@@ -29,9 +29,13 @@ export function GhostLayer({ ghosts, lang, caught, focusHash, onCatch }: Props) 
               .join(' ')}
             onClick={() => onCatch(g.hash)}
           >
-            {(lang === 'fi' || lang === 'both') && <span>{g.text_fi}</span>}
-            {(lang === 'en' || lang === 'both') && g.text_en && (
-              <span className="ghost-line__en">{g.text_en}</span>
+            {lang === 'en' ? (
+              <span>{g.text_en ?? g.text_fi}</span>
+            ) : (
+              <>
+                <span>{g.text_fi}</span>
+                {lang === 'both' && g.text_en && <span className="ghost-line__en">{g.text_en}</span>}
+              </>
             )}
           </button>
         )

@@ -104,3 +104,11 @@ CREATE TABLE IF NOT EXISTS coordination (
   evidence  JSON NOT NULL,                     -- [{"label","value","explain"}]
   PRIMARY KEY (page_id, hash, died_rev)
 );
+
+-- Same story, every language: cached cross-language reports (api/languages.py creates it on first use).
+-- System-versioned, so every refresh is kept: FOR SYSTEM_TIME ALL shows how the names changed.
+CREATE TABLE IF NOT EXISTS lang_compare (
+  query_key  VARCHAR(400) NOT NULL PRIMARY KEY,   -- '<lang>:<title>'
+  report     JSON NOT NULL,
+  fetched_at DATETIME NOT NULL
+) WITH SYSTEM VERSIONING;

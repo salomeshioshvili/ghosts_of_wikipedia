@@ -37,7 +37,7 @@ export type GhostSummary = {
 export type ArticlePayload = {
   page_id: number
   title_fi: string
-  title_en: string
+  title_en: string | null
   as_of: string
   ghost_count: number
   sentences: LivingSentence[]
@@ -119,3 +119,49 @@ export type Stats = {
 }
 
 export type LangMode = 'both' | 'fi' | 'en'
+
+export type Biography = {
+  page_id: number
+  chapters: Array<{ ts: string; caption_en: string; rev_ids: number[] }>
+  audio_url?: string | null
+}
+
+export type LangSignal = { kind: string; label: string; explain: string }
+
+export type LangRename = {
+  ts: string
+  from: string
+  to: string
+  reason: string | null
+  reason_en?: string | null
+  undone_after_hours?: number
+  reverses?: boolean
+}
+
+export type LangEdition = {
+  lang: string
+  language: string
+  autonym?: string | null
+  title: string
+  title_en?: string | null
+  url?: string
+  first_sentence?: string | null
+  first_sentence_en?: string | null
+  names: string[]
+  renames: LangRename[]
+  locks: number
+  recent: { edits: number; reverted: number; since: string | null }
+  signals?: LangSignal[]
+  error?: string
+}
+
+export type LangCompare = {
+  query: { lang: string; title: string }
+  languages_available: number
+  editions: LangEdition[]
+  summary: { renames: number; renames_undone: number; locks: number; names: number; editions_with_signals: number }
+  fetched_at: string
+  seconds: number
+  translated_by: string | null
+  cached: boolean
+}

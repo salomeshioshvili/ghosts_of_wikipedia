@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Biography } from '../components/Biography'
 import { Certificate } from '../components/Certificate'
 import { GhostLayer } from '../components/GhostLayer'
 import { TimeSlider } from '../components/TimeSlider'
 import {
   formatDate,
   getArticle,
+  getBiography,
   getGhost,
   getTimeline,
 } from '../lib/api'
 import type {
   ArticlePayload,
+  Biography as BiographyData,
   GhostCertificate,
   GhostSummary,
   LangMode,
@@ -39,11 +42,14 @@ export function Article() {
   const [frameIndex, setFrameIndex] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [bio, setBio] = useState<BiographyData | null>(null)
 
   useEffect(() => {
     setArticle(null)
     setTimeline(null)
     setLoadError(null)
+    setBio(null)
+    void getBiography(Number(pageId)).then(setBio)
     // The first visit to an article processes its whole edit history on the server, so this can take a while.
     void getArticle(Number(pageId))
       .then((a) => Promise.all([a, getTimeline(Number(pageId))]))
@@ -152,6 +158,15 @@ export function Article() {
     setFocusHash(hash)
   }
 
+  /** Biography chapters: land on the first snapshot that already contains the change. */
+  function jumpAfterIso(iso: string) {
+    if (!timeline) return
+    const t = new Date(iso).getTime()
+    const i = timeline.frames.findIndex((f) => new Date(f.ts).getTime() >= t)
+    setFrameIndex(i < 0 ? timeline.frames.length - 1 : i)
+    setPlaying(false)
+  }
+
   function jumpToIso(iso: string) {
     if (!timeline) return
     const t = new Date(iso).getTime()
@@ -200,6 +215,13 @@ export function Article() {
             >
               {showGhosts ? 'Ghosts on' : 'Ghosts off'}
             </button>
+            <Link
+              className="chip"
+              to={`/languages?lang=fi&title=${encodeURIComponent(article.title_fi)}`}
+              title="What other Wikipedias call this, and where they fought about it"
+            >
+              Other languages
+            </Link>
             {(['en', 'fi', 'both'] as LangMode[]).map((mode) => (
               <button
                 key={mode}
@@ -215,9 +237,12 @@ export function Article() {
 
         <article className="article__main">
           <p className="article__howto">the dashed bits got deleted. click one. or smash Play.</p>
-          <h1 className="article__title">{article.title_en}</h1>
-          <p className="article__title-en">{article.title_fi}</p>
+          <h1 className="article__title">{article.title_en ?? article.title_fi}</h1>
+          {article.title_en && <p className="article__title-en">{article.title_fi}</p>}
           <p className="article__asof">{formatDate(timeline.frames[frameIndex]?.ts ?? article.as_of)}</p>
+          {bio && bio.chapters.length > 0 && (
+            <Biography data={bio} currentTs={timeline.frames[frameIndex]?.ts} onJump={jumpAfterIso} />
+          )}
 
           {sections.map((section) => (
             <div key={section}>
@@ -237,10 +262,12 @@ export function Article() {
                       }`}
                       id={`s-${b.sentence.hash}`}
                     >
-                      {(lang === 'fi' || lang === 'both') && (
+                      {lang === 'en' ? (
+                        <p className="sentence-block__fi">{b.sentence.text_en ?? b.sentence.text_fi}</p>
+                      ) : (
                         <p className="sentence-block__fi">{b.sentence.text_fi}</p>
                       )}
-                      {(lang === 'en' || lang === 'both') && b.sentence.text_en && (
+                      {lang === 'both' && b.sentence.text_en && (
                         <p className="sentence-block__en">{b.sentence.text_en}</p>
                       )}
                     </div>

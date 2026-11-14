@@ -46,11 +46,11 @@ export function Certificate({ data, open, onClose, onShowWhen, onTombstone }: Pr
             </p>
           )}
 
-          {data.coordination.evidence.length > 0 && (
+          {(data.coordination?.evidence?.length ?? 0) > 0 && (
             <div className="certificate-score">
-              <p className="score">{data.coordination.score}/100</p>
+              <p className="score">{data.coordination?.score ?? '–'}/100</p>
               <div className="evidence-chips">
-                {data.coordination.evidence.map((chip) => (
+                {(data.coordination?.evidence ?? []).map((chip) => (
                   <span className="evidence-chip" key={chip.label} title={chip.explain}>
                     {chip.value}
                   </span>
