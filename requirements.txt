@@ -1,0 +1,8 @@
+pyarrow>=15
+mwparserfromhell>=0.6
+pymysql>=1.1          # pure Python, installs anywhere; used when the mariadb connector is missing
+fastapi>=0.110
+uvicorn[standard]>=0.29
+requests>=2.31
+pandas>=2.2
+# optional, faster: pip install mariadb   (needs a prebuilt wheel for your Python version)

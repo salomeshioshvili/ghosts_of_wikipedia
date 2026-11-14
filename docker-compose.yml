@@ -1,0 +1,22 @@
+# MariaDB for Ghosts of Wikipedia. Start:  docker compose up -d --wait
+# mariadb:lts is 12.3.x: system versioning, system_versioning_insert_history and VECTOR.
+services:
+  mariadb:
+    image: mariadb:lts
+    environment:
+      MARIADB_ROOT_PASSWORD: ghosts
+      MARIADB_DATABASE: ghosts
+      MARIADB_USER: ghosts
+      MARIADB_PASSWORD: ghosts
+    command: ["--max-allowed-packet=64M", "--innodb-buffer-pool-size=2G"]
+    ports:
+      - "3307:3306"     # 3307 on your machine, so it never collides with a local MariaDB/MySQL on 3306
+    volumes:
+      - ghosts-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 30
+
+volumes:
+  ghosts-data:
