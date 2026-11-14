@@ -49,7 +49,6 @@ export function Home() {
           {hero && (
             <Link className="home__primary" to={`/article/${hero.page_id}`}>
               What did Wikipedia forget?
-              <span>Finnish Civil War</span>
             </Link>
           )}
 
@@ -80,7 +79,7 @@ export function Home() {
         <div className="home__cards">
           {articles.map((a) => (
             <Link className="haunt-card" key={a.page_id} to={`/article/${a.page_id}`}>
-              <h3 className="haunt-card__fi">{a.title_en ?? a.title_fi}</h3>
+              <h3 className="haunt-card__fi">{a.title_fi || a.title_en}</h3>
               <p className="haunt-card__count">{a.ghost_count} ghosts</p>
             </Link>
           ))}

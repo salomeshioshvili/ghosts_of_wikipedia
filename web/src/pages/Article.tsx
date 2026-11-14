@@ -83,6 +83,14 @@ export function Article() {
     return () => window.clearInterval(id)
   }, [playing, timeline])
 
+  const sectionByHash = useMemo(() => {
+    const m = new Map<string, string>()
+    if (!article) return m
+    for (const s of article.sentences) m.set(s.hash.toLowerCase(), s.section ?? '')
+    for (const g of article.ghosts) m.set(g.hash.toLowerCase(), g.section ?? '')
+    return m
+  }, [article])
+
   const visible = useMemo(() => {
     if (!article || !timeline) {
       return { sentences: article?.sentences ?? [], ghosts: article?.ghosts ?? [] }
@@ -90,65 +98,91 @@ export function Article() {
     const frame = timeline.frames[frameIndex]
     if (!frame) return { sentences: article.sentences, ghosts: article.ghosts }
 
+    // Latest frame: use the article payload (stable sections, full ghost list).
+    if (frameIndex === timeline.frames.length - 1) {
+      return { sentences: article.sentences, ghosts: article.ghosts }
+    }
+
+    const frameTs = new Date(frame.ts).getTime()
     const living = frame.hashes
-      .map((hash, pos) => {
+      .map((raw, pos) => {
+        const hash = raw.toLowerCase()
         const s = timeline.sentences[hash]
-        if (!s || s.died) return null
+        if (!s) return null
+        // If it's in this frame's hash list, it was alive then — do NOT drop just because it dies later.
+        if (s.died && new Date(s.died).getTime() <= frameTs) return null
         return {
           hash,
           text_fi: s.text_fi,
           text_en: s.text_en,
-          section: article.sentences.find((x) => x.hash === hash)?.section ?? '',
+          section: sectionByHash.get(hash) ?? '',
           pos,
           born: s.born,
         } satisfies LivingSentence
       })
       .filter((x): x is LivingSentence => x !== null)
 
-    // If frame only has living hashes, keep article ghosts that have died by this frame
-    const frameTs = new Date(frame.ts).getTime()
     const ghosts = article.ghosts.filter((g) => new Date(g.died).getTime() <= frameTs)
 
-    // Prefer article sentences when on latest frame for stable sections
-    if (frameIndex === timeline.frames.length - 1) {
-      return { sentences: article.sentences, ghosts: article.ghosts }
-    }
-
     return { sentences: living.length ? living : article.sentences, ghosts }
-  }, [article, timeline, frameIndex])
+  }, [article, timeline, frameIndex, sectionByHash])
 
   const blocks = useMemo(() => {
     const byAfter = new Map<string, GhostSummary[]>()
     if (showGhosts) {
       for (const g of visible.ghosts) {
-        const key = g.after_hash ?? ''
+        const key = (g.after_hash ?? '').toLowerCase()
         const list = byAfter.get(key) ?? []
         list.push(g)
         byAfter.set(key, list)
       }
     }
 
+    const livingHashes = new Set(visible.sentences.map((s) => s.hash.toLowerCase()))
     const out: Block[] = []
-    const top = byAfter.get('')            // ghosts that stood before the first living sentence
-    if (top?.length) out.push({ type: 'ghosts', afterHash: '', ghosts: top })
+    const top = byAfter.get('')
+    if (top?.length) {
+      out.push({ type: 'ghosts', afterHash: '', ghosts: top })
+      byAfter.delete('')
+    }
     for (const sentence of visible.sentences) {
       out.push({ type: 'living', sentence })
-      const ghosts = byAfter.get(sentence.hash)
-      if (ghosts?.length) out.push({ type: 'ghosts', afterHash: sentence.hash, ghosts })
+      const key = sentence.hash.toLowerCase()
+      const ghosts = byAfter.get(key)
+      if (ghosts?.length) {
+        out.push({ type: 'ghosts', afterHash: sentence.hash, ghosts })
+        byAfter.delete(key)
+      }
+    }
+    // Neighbors that also died: after_hash points at a sentence that isn't living anymore.
+    // Still show those ghosts (end of their section) so the dashed boxes don't vanish.
+    for (const [afterHash, ghosts] of byAfter) {
+      if (!ghosts.length) continue
+      if (afterHash && livingHashes.has(afterHash)) continue
+      out.push({ type: 'ghosts', afterHash, ghosts })
     }
     return out
   }, [visible, showGhosts])
 
   const sections = useMemo(() => {
+    // Short stubs often have no == headings ==, so section is "". Still render them.
     const seen = new Set<string>()
-    return visible.sentences
-      .map((s) => s.section)
-      .filter((section) => {
-        if (!section || seen.has(section)) return false
-        seen.add(section)
-        return true
-      })
-  }, [visible.sentences])
+    const out: string[] = []
+    for (const s of visible.sentences) {
+      const section = s.section ?? ''
+      if (seen.has(section)) continue
+      seen.add(section)
+      out.push(section)
+    }
+    // Ghosts whose section never appears on a living sentence (e.g. whole lead was rewritten)
+    for (const g of visible.ghosts) {
+      const section = g.section ?? ''
+      if (seen.has(section)) continue
+      seen.add(section)
+      out.push(section)
+    }
+    return out.length ? out : ['']
+  }, [visible.sentences, visible.ghosts])
 
   async function openGhost(hash: string) {
     const cert = await getGhost(Number(pageId), hash)
@@ -238,13 +272,17 @@ export function Article() {
         <article className="article__main">
           <p className="article__howto">the dashed bits got deleted. click one. or smash Play.</p>
           {lang !== 'fi' &&
-            article.sentences.length > 0 &&
-            article.sentences.filter((s) => s.text_en).length < article.sentences.length * 0.5 && (
-              <p className="article__en-hint">
-                English is still being filled in — missing lines stay Finnish until the translate job catches up.
-                Refresh in a few minutes.
-              </p>
-            )}
+            (() => {
+              const need = [...article.sentences, ...article.ghosts]
+              const missing = need.filter((s) => !s.text_en).length
+              if (missing === 0) return null
+              return (
+                <p className="article__en-hint">
+                  {missing} lines still waiting on English (dashed boxes included). They stay Finnish until
+                  the translate job finishes — refresh in a few minutes.
+                </p>
+              )
+            })()}
           <h1 className="article__title">
             {lang === 'en' && article.title_en ? article.title_en : article.title_fi}
           </h1>
@@ -262,13 +300,13 @@ export function Article() {
           )}
 
           {sections.map((section) => (
-            <div key={section}>
-              <h2 className="article__section">{section}</h2>
+            <div key={section || '__lead'}>
+              {section ? <h2 className="article__section">{section}</h2> : null}
               {blocks
                 .filter((b) =>
                   b.type === 'living'
-                    ? b.sentence.section === section
-                    : b.ghosts[0]?.section === section,
+                    ? (b.sentence.section ?? '') === section
+                    : (b.ghosts[0]?.section ?? '') === section,
                 )
                 .map((b) =>
                   b.type === 'living' ? (
@@ -331,6 +369,7 @@ export function Article() {
       <Certificate
         data={certificate}
         open={drawerOpen}
+        lang={lang}
         onClose={() => setDrawerOpen(false)}
         onShowWhen={jumpToIso}
         onTombstone={() => {
