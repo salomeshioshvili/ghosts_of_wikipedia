@@ -5,4 +5,5 @@ fastapi>=0.110
 uvicorn[standard]>=0.29
 requests>=2.31
 pandas>=2.2
+python-dotenv>=1.0   # ai/translate.py reads .env with it
 # optional, faster: pip install mariadb   (needs a prebuilt wheel for your Python version)

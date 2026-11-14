@@ -6,23 +6,29 @@ Built at Junction 2026 for MariaDB's *Wikipedia Through Time* challenge, on Mari
 
 ## Run it
 
-MariaDB 12.3 on port 3306 (native install, or `docker compose up -d --wait`), database/user/password `ghosts`. Then:
+**See [RUNNING.md](RUNNING.md)**: a 2-minute frontend-only look, the full app with MariaDB, and the AI extras.
+Short version (MariaDB 12.3 on port 3306, database/user/password `ghosts`):
 
 ```powershell
 copy .env.example .env
 python -m pip install --user -r requirements.txt
-
-python pipeline/download.py                      # dataset M, 16 Parquet files, 315 MB
-python pipeline/revisions.py                     # all 862,076 revisions (no text) -> revision, article
-python pipeline/lives.py --pages 1150 250972 1291614 640247 11834   # the 1918 war and its sister articles
-python pipeline/moves.py                         # sentences that moved to another article
-python pipeline/stats.py                         # half-life of a sentence, % deleted -> data/stats.json
-python -m uvicorn api.main:app --port 8000       # http://localhost:8000/docs
-
-cd web && npm install && npm run dev             # http://localhost:5173 (proxies /api to :8000)
+python pipeline/download.py                       # dataset M, 315 MB
+python pipeline/revisions.py                      # revision + article tables
+python -m uvicorn api.main:app --reload --port 8000
+cd web; npm install; npm run dev                  # http://localhost:5173
 ```
 
-Rebuild the sentence tables from scratch: add `--reset` to `lives.py`. All 50 hero articles: `lives.py --heroes --workers 4`.
+Articles are processed the first time they are opened. To prepare the demo set up front:
+`python pipeline/lives.py --heroes --workers 4`, then `moves.py` and `stats.py`.
+
+## What you can do
+
+- **Search any of the 19,742 articles** by title; open one to see its deleted sentences ("ghosts") in place.
+- **Death certificate** per ghost: born, died, who removed it and why, earlier lives, what it came back as. Plus a **tombstone**.
+- **Time slider / Play**: the article as it stood on any day, 2003–2026.
+- **Life story**: Gemma's biography of the article; each chapter jumps the timeline there.
+- **Same story, every language**: what up to 12 Wikipedias call a topic, every rename and whether it was undone, locks, revert rates, with neutral conflict signals.
+- **Meaning search** over deleted sentences (EmbeddingGemma + MariaDB vectors) and a **coordination score** per removal.
 
 ## How it works
 
@@ -34,7 +40,7 @@ Rebuild the sentence tables from scratch: add `--reset` to `lives.py`. All 50 he
 6. **sentence_vec** holds EmbeddingGemma vectors with a `VECTOR INDEX`; ghost search is one query: vector search, then time travel over the dead.
 
 ## MariaDB features used
-System-versioned tables · `system_versioning_insert_history` · `FOR SYSTEM_TIME AS OF / ALL` · application-time periods · `VECTOR(768)` + `VECTOR INDEX` + `VEC_DISTANCE_COSINE` · JSON columns. *(Numbers and timings: fill in after the runs.)*
+System-versioned tables (`sentence_life`, and `lang_compare`, which keeps every cross-language snapshot) · `system_versioning_insert_history` · `FOR SYSTEM_TIME AS OF / ALL` · application-time periods · `VECTOR(768)` + `VECTOR INDEX` + `VEC_DISTANCE_COSINE` · JSON columns. *(Numbers and timings: fill in after the runs.)*
 
 ## Folders
 
