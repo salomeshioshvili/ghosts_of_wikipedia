@@ -5,7 +5,7 @@ Turns sentences into 768-number vectors so ghosts can be searched by meaning.
   Test on the sample file (no database needed):
       modal run embed_modal.py --file sentences_fi.txt
 
-  Fill sentence_vec in MariaDB (needs DB_URL in .env and `pip install mariadb python-dotenv`):
+  Fill sentence_vec in MariaDB (needs DB_URL in the repo .env and `pip install pymysql`):
       modal run embed_modal.py --db --page 1150     # one article first
       modal run embed_modal.py --db                 # every sentence not embedded yet
 
@@ -105,16 +105,13 @@ def run_file(path: str) -> None:
 
 
 def run_db(page: int) -> None:
-    from urllib.parse import urlparse
+    # Person 1's shared connection: reads DB_URL from the repo's .env; works with pymysql alone.
+    import sys
 
-    import mariadb
-    from dotenv import load_dotenv
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
+    from common import connect
 
-    load_dotenv()
-    u = urlparse(os.environ["DB_URL"])
-    conn = mariadb.connect(host=u.hostname, port=u.port or 3306, user=u.username,
-                           password=u.password or "", database=u.path.lstrip("/"))
-    cur = conn.cursor()
+    conn, cur = connect()
     if page:
         cur.execute(
             "SELECT DISTINCT s.hash, s.text_fi FROM sentence s "

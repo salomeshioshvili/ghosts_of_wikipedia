@@ -24,7 +24,6 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from urllib.parse import urlparse
 
 import requests
 from dotenv import load_dotenv
@@ -176,15 +175,16 @@ def run_file(path: str) -> None:
 # ---------- database mode ----------
 
 def connect():
-    import mariadb  # only needed for --db
-    u = urlparse(os.environ["DB_URL"])
-    return mariadb.connect(host=u.hostname, port=u.port or 3306, user=u.username,
-                           password=u.password or "", database=u.path.lstrip("/"))
+    """Person 1's shared connection (pipeline/common.py): reads DB_URL from the repo's .env,
+    uses the mariadb package if installed, otherwise pure-Python PyMySQL (pip install pymysql)."""
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
+    from common import connect as shared_connect
+    return shared_connect()
 
 
 def run_db(page_id) -> None:
-    conn = connect()
-    cur = conn.cursor()
+    conn, cur = connect()
     if page_id:
         cur.execute(
             "SELECT DISTINCT s.hash, s.text_fi FROM sentence s "
