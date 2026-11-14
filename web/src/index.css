@@ -1,0 +1,97 @@
+:root {
+  /* muted night blue-gray from the Human Stories room — not pure black */
+  --night: #2f3a48;
+  --night-deep: #24303c;
+  --ink: #121820;
+  --cream: #f3efe6;
+  --cream-dim: #d9d3c6;
+  --yellow: #f0d24a;
+  --yellow-deep: #d4b52a;
+  --muted: #aeb6c2;
+  --line: #121820;
+
+  --font-poster: 'Anton', Impact, sans-serif;
+  --font-ui: 'Libre Franklin', system-ui, sans-serif;
+  --font-read: 'Libre Baskerville', Georgia, serif;
+
+  --reading-width: 40rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--cream);
+  font-family: var(--font-ui);
+  font-size: 17px;
+  line-height: 1.5;
+  background-color: var(--night);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(18, 24, 32, 0.35) 1px, transparent 0);
+  background-size: 5px 5px;
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* soft film grain on top — light, so text stays readable */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}

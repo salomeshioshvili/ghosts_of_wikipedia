@@ -1,0 +1,13 @@
+{
+  "articles": 19742,
+  "versions": 862076,
+  "sentences": 1482031,
+  "ghosts": 214488,
+  "half_life_years": 4.2,
+  "pct_deleted": 38.6,
+  "timings_ms": {
+    "as_of": 42,
+    "ghosts": 38,
+    "search": 61
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "page_id": 1150,
+  "chapters": [
+    {
+      "ts": "2005-02-01T00:00:00Z",
+      "caption_en": "Early editors write the war as a freedom war — vapaussota — a liberation from the east.",
+      "rev_ids": [101]
+    },
+    {
+      "ts": "2009-11-12T16:40:00Z",
+      "caption_en": "In 2009, editors begin replacing 'freedom war' with more neutral wording. The old name becomes a ghost.",
+      "rev_ids": [880]
+    },
+    {
+      "ts": "2011-03-18T14:22:00Z",
+      "caption_en": "A careful sentence returns: the war has been called many names, depending on who was speaking.",
+      "rev_ids": [1204]
+    },
+    {
+      "ts": "2014-08-09T09:11:00Z",
+      "caption_en": "By 2014, sisällissota — civil war — is the established name on the page Wikipedia shows today.",
+      "rev_ids": [1901]
+    }
+  ],
+  "audio_url": null
+}

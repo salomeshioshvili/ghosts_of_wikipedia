@@ -55,6 +55,13 @@ def who(user, anonymous):
     return {"user": None if anonymous else user, "anonymous": bool(anonymous)}
 
 
+def event_tag(y0, y1):
+    """'talks about 1918' / 'talks about 1918–1920' from the sentence's event years."""
+    if not y0:
+        return None
+    return f"talks about {y0}" if not y1 or y1 == y0 else f"talks about {y0}–{y1}"
+
+
 @app.get("/api/articles")
 def articles(featured: int = 0, limit: int = 12):
     if featured:
@@ -68,7 +75,8 @@ def articles(featured: int = 0, limit: int = 12):
 
 
 @app.get("/api/articles/{page_id}")
-def article(page_id: int, as_of: str | None = None):
+def article(page_id: int, as_of: str | None = None, min_days: int = 7):
+    """min_days: hide ghosts that lived less than this (edit churn, not history)."""
     when = as_of_param(as_of) or datetime.utcnow()
     meta = rows("SELECT * FROM article WHERE page_id = ?", (page_id,))
     if not meta:
@@ -83,10 +91,12 @@ def article(page_id: int, as_of: str | None = None):
             (SELECT COUNT(*) FROM sentence_life FOR SYSTEM_TIME ALL x
               WHERE x.page_id = l.page_id AND x.hash = l.hash) AS lives,
             (SELECT MAX(c.score) FROM coordination c WHERE c.page_id = l.page_id AND c.hash = l.hash) AS score,
-            m.to_page_id AS moved_to, ma.title_fi AS moved_title
+            m.to_page_id AS moved_to, ma.title_fi AS moved_title,
+            YEAR(e.event_from) AS y0, YEAR(e.event_to) - 1 AS y1
         FROM sentence_life FOR SYSTEM_TIME ALL AS l JOIN sentence s USING (hash)
         LEFT JOIN sentence_move m ON m.page_id = l.page_id AND m.hash = l.hash AND m.died_rev = l.died_rev
         LEFT JOIN article ma ON ma.page_id = m.to_page_id
+        LEFT JOIN sentence_event e ON e.hash = l.hash
         WHERE l.page_id = ? AND l.kind IN ('erased', 'rewritten') AND l.row_end <= TIMESTAMP '{stamp}'
         ORDER BY l.row_end DESC""", (page_id,))
     ghosts, seen = [], set()
@@ -94,13 +104,15 @@ def article(page_id: int, as_of: str | None = None):
         if g["hash"] in alive_now or g["hash"] in seen:
             continue
         seen.add(g["hash"])
+        if (g["died"] - g["born"]).days < min_days:
+            continue
         rare = (g["lives"] or 0) >= 3 or (g["score"] or 0) >= 70
         moved = {"page_id": g["moved_to"], "title_fi": g["moved_title"]} if g["moved_to"] else None
         ghosts.append({"hash": g["hash"].lower(), "text_fi": g["text_fi"], "text_en": g["text_en"],
                        "section": g["section"], "after_hash": (g["after_hash"] or "").lower() or None,
                        "born": iso(g["born"]), "died": iso(g["died"]), "kind": "moved" if moved else g["kind"],
                        "moved_to": moved, "lives": g["lives"], "rarity": "rare" if rare else "common",
-                       "coordination_score": g["score"]})
+                       "coordination_score": g["score"], "event_tag": event_tag(g["y0"], g["y1"])})
     m = meta[0]
     return {"page_id": page_id, "title_fi": m["title_fi"], "title_en": m["title_en"], "as_of": iso(when),
             "ghost_count": sum(1 for g in ghosts if g["kind"] != "moved"),
@@ -158,6 +170,8 @@ def ghost(page_id: int, hash_hex: str):
     return {"hash": hash_hex.lower(), "page_id": page_id, "text_fi": text["text_fi"], "text_en": text["text_en"],
             "kind": last_dead["kind"] if last_dead else "alive",
             "talks_about": [event[0]["y0"], event[0]["y1"]] if event else None,
+            "event_tag": event_tag(event[0]["y0"], event[0]["y1"]) if event else None,
+            "rarity": "rare" if len(lives) >= 3 or (coord and coord[0]["score"] >= 70) else "common",
             "lives": [{"born": iso(l["born"]), "born_rev": l["born_rev"], "born_by": who(l["born_user"], l["born_anon"]),
                        "died": iso(alive_end(l["died"])), "died_rev": l["died_rev"],
                        "removed_by": who(l["died_user"], l["died_anon"]) if l["died_rev"] else None,
@@ -165,7 +179,8 @@ def ghost(page_id: int, hash_hex: str):
                        "moved_to": {"page_id": l["moved_to"], "title_fi": l["moved_title"]} if l["moved_to"] else None}
                       for l in lives],
             "reincarnated_as": reincarnated,
-            "coordination": {"score": coord[0]["score"], "evidence": json.loads(coord[0]["evidence"])} if coord else None,
+            "coordination": ({"score": coord[0]["score"], "evidence": json.loads(coord[0]["evidence"])}
+                             if coord else {"score": None, "evidence": []}),   # frontend expects an object
             "links": {"born": f"https://fi.wikipedia.org/?oldid={lives[0]['born_rev']}",
                       "died": f"https://fi.wikipedia.org/?oldid={last_dead['died_rev']}" if last_dead else None}}
 

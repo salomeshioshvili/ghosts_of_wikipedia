@@ -1,2 +1,4 @@
-# mock/
-JSON fixtures in the exact API contract shapes (see the build doc). One file per endpoint, e.g. `article_1150.json`, `timeline_1150.json`, `ghost_1150_cd34.json`, `search.json`, `stats.json`.
+# Mock API fixtures (Person 2)
+
+JSON files matching the frozen API contract in the build doc.
+Frontend reads these until Person 1’s FastAPI is live.

@@ -15,10 +15,16 @@ if os.path.exists(_env):
             os.environ.setdefault(key.strip(), value.strip())
 
 DB = dict(host=os.environ.get("DB_HOST", "127.0.0.1"),
-          port=int(os.environ.get("DB_PORT", 3307)),
+          port=int(os.environ.get("DB_PORT", 3306)),
           user=os.environ.get("DB_USER", "ghosts"),
           password=os.environ.get("DB_PASSWORD", "ghosts"),
           database=os.environ.get("DB_NAME", "ghosts"))
+if os.environ.get("DB_URL"):                      # mysql://user:password@host:port/database
+    from urllib.parse import unquote, urlparse
+    _u = urlparse(os.environ["DB_URL"])
+    DB.update(host=_u.hostname or DB["host"], port=_u.port or DB["port"],
+              user=unquote(_u.username or DB["user"]), password=unquote(_u.password or DB["password"]),
+              database=(_u.path or "/").lstrip("/") or DB["database"])
 
 
 class _QmarkCursor:

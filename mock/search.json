@@ -1,0 +1,29 @@
+[
+  {
+    "page_id": 1150,
+    "title_en": "Finnish Civil War",
+    "hash": "cd34",
+    "text_fi": "Suomen vapaussota oli taistelu, jossa valkoiset vapauttivat maan bolševismista vuonna 1918.",
+    "text_en": "Finland's freedom war was a struggle in which the Whites liberated the country from Bolshevism in 1918.",
+    "died": "2009-11-12T16:40:00Z",
+    "similarity": 0.91
+  },
+  {
+    "page_id": 1150,
+    "title_en": "Finnish Civil War",
+    "hash": "cd35",
+    "text_fi": "Vapaussodan voitto turvasi Suomen itsenäisyyden idän uhkaa vastaan.",
+    "text_en": "Victory in the freedom war secured Finland's independence against the threat from the east.",
+    "died": "2011-03-18T14:22:00Z",
+    "similarity": 0.81
+  },
+  {
+    "page_id": 1256,
+    "title_en": "Winter War",
+    "hash": "ww01",
+    "text_fi": "Talvisotaa kutsuttiin ajoittain myös Suomen toiseksi vapaussodaksi.",
+    "text_en": "The Winter War was at times also called Finland's second freedom war.",
+    "died": "2013-05-04T00:00:00Z",
+    "similarity": 0.72
+  }
+]

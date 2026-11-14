@@ -1,7 +1,10 @@
-# web/
-React + Vite + TypeScript frontend (Person 2). Scaffold with:
+# Frontend (Person 2)
 
-    npm create vite@latest . -- --template react-ts
-    npm i framer-motion d3 html-to-image qrcode.react
+React + Vite + TypeScript app for Ghosts of Wikipedia.
 
-Build on the JSON in ../mock/ until the API is up (http://localhost:8000/api). `npm run build` -> web/dist, which the API serves at /.
+    npm install
+    npm run dev          # http://localhost:5173 ; /api is proxied to FastAPI on http://localhost:8000
+
+Mock data: `src/lib/api.ts` has `USE_MOCK`. Set it to `false` to use the real API
+(start it from the repo root: `python -m uvicorn api.main:app --port 8000`).
+`npm run build` writes `web/dist`, which the API serves at `/` in production.

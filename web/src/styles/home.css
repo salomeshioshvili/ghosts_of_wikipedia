@@ -1,0 +1,259 @@
+.home {
+  flex: 1;
+  width: min(100%, 860px);
+  margin: 0 auto;
+  padding: 1.75rem 1.25rem 2.75rem;
+}
+
+.home__poster {
+  text-align: center;
+  border: 3px solid var(--ink);
+  background: var(--night-deep);
+  padding: 1.35rem 1.1rem 1.1rem;
+  box-shadow: 8px 8px 0 var(--ink);
+}
+
+.home__title {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: clamp(2.1rem, 7vw, 3.1rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--cream);
+}
+
+.home__title-accent {
+  color: var(--yellow);
+  font-style: italic;
+  background: none;
+  padding: 0;
+}
+
+.home__point {
+  margin: 0.75rem 0 0.9rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cream);
+}
+
+.blob-ghosts {
+  display: block;
+  width: min(100%, 20rem);
+  margin: 0.15rem auto 0;
+  height: auto;
+  overflow: visible;
+}
+
+.blob-ghosts > g:nth-child(1) .blob-ghost {
+  animation: ghost-bob 3.2s ease-in-out infinite;
+}
+.blob-ghosts > g:nth-child(2) .blob-ghost {
+  animation: ghost-bob 2.8s ease-in-out -0.7s infinite;
+}
+.blob-ghosts > g:nth-child(3) .blob-ghost {
+  animation: ghost-bob 3.5s ease-in-out -1.4s infinite;
+}
+.blob-ghosts > g:nth-child(4) .blob-ghost {
+  animation: ghost-bob 3s ease-in-out -2.1s infinite;
+}
+
+@keyframes ghost-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blob-ghost {
+    animation: none;
+  }
+}
+
+.home__hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+  margin-top: 1rem;
+  align-items: start;
+}
+
+.home__art-wrap {
+  margin: 0;
+  position: relative;
+}
+
+.home__art {
+  display: block;
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+  object-position: center;
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--yellow);
+  background: var(--night-deep);
+}
+
+.home__art-wrap figcaption {
+  position: absolute;
+  left: 0.65rem;
+  bottom: 0.65rem;
+  margin: 0;
+  background: var(--yellow);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  font-family: var(--font-poster);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  padding: 0.2rem 0.45rem;
+}
+
+.home__side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  height: 280px;
+}
+
+.home__primary {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+  flex: 1;
+  background: var(--yellow);
+  border: 3px solid var(--ink);
+  padding: 1.15rem 1.1rem;
+  font-family: var(--font-poster);
+  font-size: clamp(1.35rem, 3vw, 1.6rem);
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.home__primary span {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.home__primary:hover {
+  background: var(--ink);
+  color: var(--yellow);
+}
+
+.home__search {
+  display: flex;
+  align-items: stretch;
+  gap: 0.4rem;
+  background: var(--cream);
+  border: 3px solid var(--ink);
+  padding: 0.45rem;
+}
+
+.home__search input {
+  flex: 1;
+  min-width: 0;
+  border: 2px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+  padding: 0.7rem 0.75rem;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.home__search button {
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--cream);
+  font-weight: 700;
+  padding: 0.7rem 0.95rem;
+  text-transform: lowercase;
+}
+
+.home__search button:hover {
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.home__haunted {
+  margin-top: 1.5rem;
+}
+
+.home__haunted-label {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-poster);
+  font-size: 1.1rem;
+  letter-spacing: 0.03em;
+  color: var(--cream);
+}
+
+.home__cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+}
+
+.haunt-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--cream);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  padding: 0.9rem 0.85rem;
+  min-height: 7rem;
+}
+
+.haunt-card:hover {
+  box-shadow: 4px 4px 0 var(--yellow);
+}
+
+.haunt-card__fi {
+  margin: 0;
+  font-family: var(--font-read);
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.25;
+  flex: 1;
+}
+
+.haunt-card__count {
+  margin: 0;
+  align-self: flex-start;
+  background: var(--ink);
+  color: var(--yellow);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.25rem 0.4rem;
+}
+
+.home__stats {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--cream);
+}
+
+@media (max-width: 700px) {
+  .home__hero,
+  .home__cards {
+    grid-template-columns: 1fr;
+  }
+
+  .home__side {
+    height: auto;
+  }
+
+  .home__art {
+    height: 220px;
+  }
+}
