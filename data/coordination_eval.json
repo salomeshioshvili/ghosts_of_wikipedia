@@ -1,0 +1,51 @@
+{
+  "flag_threshold": 95,
+  "removals_scored": 76024,
+  "groups_of_2_plus": 7866,
+  "share_of_removals_in_groups": 0.103,
+  "planted_obvious_caught": 1.0,
+  "planted_subtle_caught": 0.0,
+  "random_groups_flagged": 0.006,
+  "method": "percentile of (in-sync: timing, accounts vs the article's normal pace) x (unusual accounts: dormancy, new, shared removals elsewhere) among all groups of 2+ accounts removing text from the same article within 12 hours; bots and reverts excluded",
+  "planted_example": {
+    "label": "PLANTED TEST RING - not real editors",
+    "score": 100,
+    "evidence": [
+      {
+        "label": "Accounts",
+        "value": "4 accounts",
+        "explain": "Distinct accounts that removed text from this article within 12 hours of each other."
+      },
+      {
+        "label": "Timing",
+        "value": "all within 36 minutes",
+        "explain": "Time between the first and last removal in the group. Ordinary editing is spread out."
+      },
+      {
+        "label": "Activity",
+        "value": "normally 0.1 removers a day here",
+        "explain": "How many accounts usually removed text from this article per day that month. A group on a busy article is less unusual than the same group on a quiet one."
+      },
+      {
+        "label": "Dormancy",
+        "value": "3 of 4 silent 1+ year",
+        "explain": "Accounts that had made no edit in these articles for a year or more beforehand."
+      },
+      {
+        "label": "New",
+        "value": "0 of 4 first seen within 30 days",
+        "explain": "Accounts whose first edit in these articles came less than a month earlier."
+      },
+      {
+        "label": "Overlap",
+        "value": "4 of 4 also cut 3 other articles",
+        "explain": "Accounts that also removed text from the same other articles within a week."
+      },
+      {
+        "label": "Baseline",
+        "value": "higher than 100% of 7,866 groups",
+        "explain": "How in sync they were, times how unusual the accounts were, compared with every group of accounts that removed text together in the 19,742 articles. Zero when the accounts look ordinary, however close the timing."
+      }
+    ]
+  }
+}

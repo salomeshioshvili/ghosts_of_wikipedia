@@ -12,3 +12,5 @@ data/m/
 data/cache/
 translations_cache.json
 translations.json
+data/captures/
+data/video/

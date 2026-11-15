@@ -71,9 +71,17 @@ def load_cache() -> dict:
 
 
 def save_cache(cache: dict) -> None:
+    """Best effort: the cache only saves repeat work. On Windows the file can be briefly locked
+    (antivirus, indexer, an editor), so retry a few times and then just carry on."""
     tmp = CACHE_PATH.with_suffix(".tmp")
-    tmp.write_text(json.dumps(cache, ensure_ascii=False, indent=0), encoding="utf-8")
-    tmp.replace(CACHE_PATH)
+    for attempt in range(5):
+        try:
+            tmp.write_text(json.dumps(cache, ensure_ascii=False, indent=0), encoding="utf-8")
+            tmp.replace(CACHE_PATH)
+            return
+        except PermissionError:
+            time.sleep(0.5 * (attempt + 1))
+    print("  (couldn't update translations_cache.json; the database still gets the translations)")
 
 
 def chat(messages: list, max_tokens: int = 4000) -> str:
@@ -147,11 +155,11 @@ def translate_all(items: list, on_batch=None) -> dict:
         futures = [pool.submit(translate_batch, b) for b in batches]
         for fut in as_completed(futures):
             result = fut.result()
+            if on_batch:              # write to the database first, so nothing translated is lost
+                on_batch(result)
             with _cache_lock:
                 cache.update(result)
                 save_cache(cache)
-            if on_batch:
-                on_batch(result)
             done += len(result)
             rate = done / max(time.time() - started, 0.1)
             print(f"  {done}/{len(todo)}  ({rate:.1f} sentences/s)")
