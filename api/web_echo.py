@@ -136,7 +136,7 @@ def web_echo(page_id: int, hash_hex: str, refresh: int = 0):
             hit["cached"] = True
             return hit
 
-    key = os.environ.get("CONTEXT_DEV_API_KEY", "").strip()
+    key = (os.environ.get("CONTEXT_DEV_API_KEY") or os.environ.get("CONTEXT_API_KEY") or "").strip()
     if not key:
         raise HTTPException(503, "Live web search is off: add CONTEXT_DEV_API_KEY to .env")
 

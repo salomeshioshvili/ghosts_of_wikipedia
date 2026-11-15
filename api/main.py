@@ -253,9 +253,9 @@ def search(q: str = Query(..., min_length=2), limit: int = 10):
     try:
         sys.path.insert(0, os.path.join(ROOT, "ai"))
         from embed import embed_query          # Person 3: returns a list of 768 floats
-    except ImportError:
-        raise HTTPException(501, "search needs ai/embed.py (Person 3)")
-    vector = json.dumps(embed_query(q))
+        vector = json.dumps(embed_query(q))
+    except Exception:
+        return _keyword_search(q, limit)       # no embeddings yet: search deleted text by its words instead
     found = rows("""WITH near AS (
             SELECT hash, VEC_DISTANCE_COSINE(emb, VEC_FromText(?)) AS d FROM sentence_vec ORDER BY d LIMIT 200)
         SELECT l.page_id, a.title_fi, a.title_en, HEX(near.hash) AS hash, s.text_fi, s.text_en,
@@ -269,6 +269,26 @@ def search(q: str = Query(..., min_length=2), limit: int = 10):
     return [{"page_id": f["page_id"], "title_fi": f["title_fi"], "title_en": f["title_en"],
              "hash": f["hash"].lower(), "text_fi": f["text_fi"], "text_en": f["text_en"],
              "died": iso(f["died"]), "similarity": round(1 - f["d"], 3)} for f in found]
+
+
+def _keyword_search(q: str, limit: int):
+    """Deleted or rewritten sentences that contain the words (Finnish or English text), newest deaths first."""
+    words = [w for w in re.findall(r"\w+", q.lower()) if len(w) >= 2][:5]
+    if not words:
+        return []
+    where = " AND ".join("(LOWER(s.text_fi) LIKE ? OR LOWER(COALESCE(s.text_en, '')) LIKE ?)" for _ in words)
+    params = [p for w in words for p in (f"%{w}%", f"%{w}%")]
+    found = rows(f"""SELECT l.page_id, a.title_fi, a.title_en, HEX(s.hash) AS hash, s.text_fi, s.text_en,
+                            MAX(l.row_end) AS died
+                     FROM sentence s
+                     JOIN sentence_life FOR SYSTEM_TIME ALL AS l USING (hash)
+                     JOIN article a ON a.page_id = l.page_id
+                     WHERE {where} AND l.kind IN ('erased', 'rewritten')
+                     GROUP BY l.page_id, a.title_fi, a.title_en, s.hash, s.text_fi, s.text_en
+                     ORDER BY died DESC LIMIT ?""", (*params, min(max(limit, 1), 50)))
+    return [{"page_id": f["page_id"], "title_fi": f["title_fi"], "title_en": f["title_en"],
+             "hash": f["hash"].lower(), "text_fi": f["text_fi"], "text_en": f["text_en"],
+             "died": iso(f["died"]), "similarity": None} for f in found]
 
 
 @app.get("/api/articles/{page_id}/biography")

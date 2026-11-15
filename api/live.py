@@ -217,7 +217,7 @@ def live_now(page_id: int, refresh: int = 0):
             hit[0]["cached"] = True
             return hit[0]
 
-    key = os.environ.get("CONTEXT_DEV_API_KEY", "").strip()
+    key = (os.environ.get("CONTEXT_DEV_API_KEY") or os.environ.get("CONTEXT_API_KEY") or "").strip()
     if not key:
         raise HTTPException(503, "Live mode is off: add CONTEXT_DEV_API_KEY to .env")
 
