@@ -496,6 +496,202 @@ def _safe_report(lang, title):
                 "recent": {"edits": 0, "reverted": 0, "since": None}}
 
 
+_INSIGHT_DDL = """CREATE TABLE IF NOT EXISTS lang_insight (
+  query_key  VARCHAR(400) NOT NULL PRIMARY KEY,
+  insight    JSON NOT NULL,
+  created_at DATETIME NOT NULL
+) WITH SYSTEM VERSIONING"""
+
+_INTERPRET_PROMPT = """You help social scientists and historians read how different language editions of Wikipedia
+treat the same topic. You receive evidence gathered from each edition: its title and the title's English meaning, a
+framing label, why that language was included, every title rename with date and the editor's stated reason, whether a
+rename was undone and how fast, page locks, share of recent edits reverted, talk-page sections about the name, when
+each edition was first written, its size and top-level sections (in its own language), monthly readers in the last
+year and its busiest reading month ever (with how many times its usual month), the share of recent edits by
+unregistered users, distinct editors and edits per year recently, and the sections where its edits are most reverted.
+
+Write a careful reading of what the differences could mean. Rules:
+- Use ONLY the evidence given. Cite languages and dates for every claim (e.g. "Russian, 24 Feb 2022").
+- current_title is the outcome. A rename whose outcome is "undone" was reversed: the edition went back to the old
+  title. Never describe an undone rename as the edition's choice or preference.
+- Be neutral. Never say which name is right or take a side in any conflict.
+- Offer explanations as possibilities, not facts ("could reflect", "is consistent with"). Always consider ordinary
+  Wikipedia mechanics too: naming policies (common name, neutrality), editors following news coverage, vandalism,
+  page moves for disambiguation or year ranges.
+- Say what the evidence cannot show (editors are not representative of a country; titles follow policy, not
+  governments; recent-edit statistics cover a limited window).
+- Use the WHOLE range of evidence, not only titles: who wrote about it first and last, how detailed each edition
+  is and which topics only some editions give a section, when each language's readers paid attention (and whether
+  peaks line up with events visible in the evidence), how open and how busy each community's editing is, and where
+  its editors fight. At most two patterns may be about titles or renames.
+- Be specific and short. No filler.
+
+Reply with ONLY a JSON object:
+{"headline": one sentence, the most striking difference across ALL the evidence (not necessarily the title),
+ "patterns": 4-6 short observations comparing editions,
+ "possible_explanations": 2-4 hedged hypotheses,
+ "caveats": 2-3 limits of this evidence,
+ "questions": 2-3 research questions worth investigating next}"""
+
+
+@router.post("/api/languages/interpret")
+def interpret(payload: dict = Body(...)):
+    """'What could this mean?': Gemma reads the cross-language evidence. Cached in MariaDB (system-versioned)."""
+    title, lang, evidence = payload.get("title"), payload.get("lang"), payload.get("evidence")
+    if not isinstance(title, str) or not isinstance(lang, str) or not isinstance(evidence, (dict, list)):
+        raise HTTPException(400, "need title, lang and evidence")
+    blob = json.dumps(evidence, ensure_ascii=False)
+    if len(blob) > 60_000:
+        raise HTTPException(413, "evidence too large")
+    key = f"{lang.strip().lower()}:{title.strip()}"
+    import hashlib
+    key = key + "|" + hashlib.sha1(blob.encode("utf-8")).hexdigest()[:12]
+
+    con, cur = connect()
+    try:
+        cur.execute(_INSIGHT_DDL)
+        if not payload.get("refresh"):
+            cur.execute("SELECT insight FROM lang_insight WHERE query_key = ?", (key,))
+            row = cur.fetchone()
+            if row:
+                hit = json.loads(row[0]) if isinstance(row[0], (str, bytes)) else row[0]
+                hit["cached"] = True
+                return hit
+    finally:
+        con.close()
+
+    api_key = os.environ.get("FEATHERLESS_API_KEY", "").strip()
+    if not api_key:
+        raise HTTPException(503, "Add FEATHERLESS_API_KEY to .env to use Gemma")
+    model = os.environ.get("TRANSLATE_MODEL", "google/gemma-4-31B-it")
+    try:
+        r = requests.post("https://api.featherless.ai/v1/chat/completions",
+                          headers={"Authorization": f"Bearer {api_key}"},
+                          json={"model": model, "temperature": 0.2, "max_tokens": 1800,
+                                "messages": [{"role": "system", "content": _INTERPRET_PROMPT},
+                                             {"role": "user", "content": blob}]},
+                          timeout=180)
+        r.raise_for_status()
+        reply = r.json()["choices"][0]["message"]["content"]
+        out = json.loads(reply[reply.find("{"): reply.rfind("}") + 1])
+    except Exception as e:
+        raise HTTPException(502, f"Gemma didn't answer properly: {str(e)[:160]}")
+
+    def strs(v):
+        return [str(x) for x in v][:6] if isinstance(v, list) else []
+    insight = {"headline": str(out.get("headline", "")), "patterns": strs(out.get("patterns")),
+               "possible_explanations": strs(out.get("possible_explanations")), "caveats": strs(out.get("caveats")),
+               "questions": strs(out.get("questions")), "model": model,
+               "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"), "cached": False}
+    try:
+        con, cur = connect()
+        try:
+            cur.execute("INSERT INTO lang_insight (query_key, insight, created_at) VALUES (?, ?, UTC_TIMESTAMP()) "
+                        "ON DUPLICATE KEY UPDATE insight = VALUES(insight), created_at = VALUES(created_at)",
+                        (key, json.dumps(insight, ensure_ascii=False)))
+            con.commit()
+        finally:
+            con.close()
+    except Exception:
+        pass
+    return insight
+
+
+_PERSPECTIVE_PROMPT = """You compare how different language editions of Wikipedia describe the same topic. For each
+edition you get its opening section (in its own language) and the sections where its edits are most often reverted.
+
+Find 5-8 concrete points where the editions DIFFER in what they say or emphasise, for example: what the event is
+called; who is presented as the actor, cause or aggressor; how each side or group is named; numbers (casualties,
+dates, sizes); which countries, groups or minorities are mentioned or left out; tone or framing words.
+For each point, say in a few English words what each edition says, quoting short translated phrases where useful,
+or null if that edition's opening does not mention it (omissions matter). Also translate the fought-over sections.
+From each edition's top_level_sections, list (in English) the 1-3 topics that edition gives its own section and few or
+no other editions do; these show what each community thinks matters.
+
+Rules: use only the text given; be neutral and never say which edition is right; keep each cell under 18 words.
+Reply with ONLY a JSON object:
+{"summary": one sentence on the biggest difference,
+ "points": [{"point": short label, "by_language": {"<lang code>": "what it says" or null}}],
+ "fought_over": {"<lang code>": ["section name in English", ...]},
+ "own_sections": {"<lang code>": ["topic only this edition gives a section", ...]},
+ "caveats": 1-2 limits (only the opening section is compared; editions are written by different volunteer communities)}"""
+
+
+@router.post("/api/languages/perspectives")
+def perspectives(payload: dict = Body(...)):
+    """Perspectives: compare what each edition's opening section says. Cached in MariaDB (system-versioned)."""
+    title, lang, editions = payload.get("title"), payload.get("lang"), payload.get("editions")
+    if not isinstance(title, str) or not isinstance(lang, str) or not isinstance(editions, list) or len(editions) < 2:
+        raise HTTPException(400, "need title, lang and at least two editions")
+    eds = []
+    for e in editions[:14]:
+        if isinstance(e, dict) and e.get("lead"):
+            eds.append({"lang": str(e.get("lang")), "language": str(e.get("language") or ""),
+                        "opening": str(e["lead"])[:1500],
+                        "fought_over_sections": [str(x) for x in (e.get("fought_sections") or [])][:4],
+                        "top_level_sections": [str(x) for x in (e.get("sections") or [])][:25]})
+    if len(eds) < 2:
+        raise HTTPException(409, "Refresh the comparison first, so each edition's opening section is loaded")
+    blob = json.dumps({"topic": title, "editions": eds}, ensure_ascii=False)
+    import hashlib
+    key = f"persp|{lang.strip().lower()}:{title.strip()}|" + hashlib.sha1(blob.encode("utf-8")).hexdigest()[:12]
+
+    con, cur = connect()
+    try:
+        cur.execute(_INSIGHT_DDL)
+        if not payload.get("refresh"):
+            cur.execute("SELECT insight FROM lang_insight WHERE query_key = ?", (key,))
+            row = cur.fetchone()
+            if row:
+                hit = json.loads(row[0]) if isinstance(row[0], (str, bytes)) else row[0]
+                hit["cached"] = True
+                return hit
+    finally:
+        con.close()
+
+    api_key = os.environ.get("FEATHERLESS_API_KEY", "").strip()
+    if not api_key:
+        raise HTTPException(503, "Add FEATHERLESS_API_KEY to .env to use Gemma")
+    model = os.environ.get("TRANSLATE_MODEL", "google/gemma-4-31B-it")
+    try:
+        r = requests.post("https://api.featherless.ai/v1/chat/completions",
+                          headers={"Authorization": f"Bearer {api_key}"},
+                          json={"model": model, "temperature": 0.2, "max_tokens": 2500,
+                                "messages": [{"role": "system", "content": _PERSPECTIVE_PROMPT},
+                                             {"role": "user", "content": blob}]},
+                          timeout=240)
+        r.raise_for_status()
+        reply = r.json()["choices"][0]["message"]["content"]
+        out = json.loads(reply[reply.find("{"): reply.rfind("}") + 1])
+    except Exception as e:
+        raise HTTPException(502, f"Gemma didn't answer properly: {str(e)[:160]}")
+
+    points = []
+    for p in out.get("points", [])[:8]:
+        if isinstance(p, dict) and isinstance(p.get("by_language"), dict):
+            points.append({"point": str(p.get("point", "")),
+                           "by_language": {str(k): (None if v in (None, "", "null") else str(v)) for k, v in p["by_language"].items()}})
+    fought = out.get("fought_over") if isinstance(out.get("fought_over"), dict) else {}
+    own = out.get("own_sections") if isinstance(out.get("own_sections"), dict) else {}
+    result = {"summary": str(out.get("summary", "")), "points": points,
+              "fought_over": {str(k): [str(x) for x in v][:4] for k, v in fought.items() if isinstance(v, list)},
+              "own_sections": {str(k): [str(x) for x in v][:3] for k, v in own.items() if isinstance(v, list)},
+              "caveats": [str(x) for x in out.get("caveats", [])][:3] if isinstance(out.get("caveats"), list) else [],
+              "model": model, "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"), "cached": False}
+    try:
+        con, cur = connect()
+        try:
+            cur.execute("INSERT INTO lang_insight (query_key, insight, created_at) VALUES (?, ?, UTC_TIMESTAMP()) "
+                        "ON DUPLICATE KEY UPDATE insight = VALUES(insight), created_at = VALUES(created_at)",
+                        (key, json.dumps(result, ensure_ascii=False)))
+            con.commit()
+        finally:
+            con.close()
+    except Exception:
+        pass
+    return result
+
+
 @router.get("/api/languages/history")
 def history(title: str, lang: str = "fi"):
     """Every stored snapshot of a comparison (MariaDB system versioning): how the names changed over time."""

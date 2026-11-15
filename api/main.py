@@ -23,6 +23,14 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from languages import router as languages_router  # noqa: E402
 app.include_router(languages_router)
+from web_echo import router as web_echo_router  # noqa: E402  (Context.dev: does the web still say it?)
+app.include_router(web_echo_router)
+from live import router as live_router  # noqa: E402  (Context.dev: today's article vs our history)
+app.include_router(live_router)
+from words import router as words_router  # noqa: E402  (words over time)
+app.include_router(words_router)
+from capture import router as capture_router  # noqa: E402  (dev-only, for the demo video; remove after)
+app.include_router(capture_router)
 
 FEATURED = (1150, 1256, 6021)            # 1918 war, Winter War, Mannerheim
 GHOST_KINDS = ("erased", "rewritten")
@@ -302,4 +310,19 @@ def stats():
 
 web_dist = os.path.join(ROOT, "web", "dist")
 if os.path.isdir(web_dist):                     # serve the built frontend at /
-    app.mount("/", StaticFiles(directory=web_dist, html=True), name="web")
+    from fastapi.responses import FileResponse
+
+    _dist_root = os.path.realpath(web_dist)
+    if os.path.isdir(os.path.join(web_dist, "assets")):
+        app.mount("/assets", StaticFiles(directory=os.path.join(web_dist, "assets")), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def spa(path: str):
+        """Files from web/dist, and index.html for every app route (/article/1150, /languages?...),
+        so a refresh or a shared link opens the right page instead of 404."""
+        if path.startswith("api/"):
+            raise HTTPException(404, "unknown API route")
+        f = os.path.realpath(os.path.join(web_dist, path))
+        if path and f.startswith(_dist_root + os.sep) and os.path.isfile(f):
+            return FileResponse(f)
+        return FileResponse(os.path.join(web_dist, "index.html"))

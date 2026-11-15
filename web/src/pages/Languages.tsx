@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { formatDate, languageMeanings, saveComparison, savedComparison } from '../lib/api'
-import { compareInBrowser, hours } from '../lib/wikilang'
+import { addLanguage, compareInBrowser, hours } from '../lib/wikilang'
+import { AtAGlance } from '../components/AtAGlance'
 import type { LangCompare, LangEdition } from '../lib/types'
 import '../styles/languages.css'
 
@@ -17,7 +18,10 @@ async function getComparison(title: string, lang: string, refresh: boolean, onPr
   let p = inflight.get(key)
   if (!p) {
     p = compareInBrowser(title, lang, onProgress).then(async (report) => {
-      await saveComparison(title, lang, report).catch(() => undefined) // still works without the database
+      // Never overwrite a good saved comparison with one where most languages failed (e.g. Wikipedia rate-limited us).
+      const ok = report.editions.filter((e) => !e.error).length
+      if (ok >= Math.ceil(report.editions.length / 2))
+        await saveComparison(title, lang, report).catch(() => undefined) // still works without the database
       return report
     })
     inflight.set(key, p)
@@ -154,6 +158,18 @@ export function Languages() {
             </p>
           </section>
 
+          <AtAGlance
+            data={data}
+            onAdd={async (l) => {
+              const next = await addLanguage(data, l)
+              setData(next)
+              await saveComparison(title, lang, next).catch(() => undefined)
+              const m = await languageMeanings(title, lang).catch(() => null)
+              if (m?.translated_by) setData(m)
+            }}
+          />
+
+          <h2 className="langs__cards-title">each language in detail</h2>
           <div className="langs__grid">
             {data.editions.map((e) => (
               <EditionCard key={e.lang} e={e} />

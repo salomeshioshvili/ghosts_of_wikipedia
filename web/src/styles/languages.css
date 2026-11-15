@@ -282,3 +282,384 @@
   font-size: 0.75rem;
   color: #555;
 }
+
+/* At a glance: how the languages differ */
+.glance {
+  background: var(--cream);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+  padding: 1rem 1.1rem 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.glance__title,
+.langs__cards-title {
+  font-family: var(--font-poster);
+  font-size: 1.5rem;
+  letter-spacing: 0.02em;
+  margin: 0 0 0.6rem;
+}
+
+.langs__cards-title {
+  color: var(--cream);
+}
+
+.glance__insights {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.glance__insights li::marker {
+  color: var(--yellow-deep);
+}
+
+.glance__muted {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.glance__tablewrap {
+  overflow-x: auto;
+}
+
+.glance__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.glance__table th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--ink);
+  padding: 0.35rem 0.5rem;
+}
+
+.glance__table td {
+  border-bottom: 1px solid var(--cream-dim);
+  padding: 0.4rem 0.5rem;
+  vertical-align: top;
+}
+
+.glance__table tr.is-hot td {
+  background: #fbefb8;
+}
+
+.glance__orig {
+  font-family: var(--font-read);
+}
+
+.glance__nums {
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.glance__frame {
+  display: inline-block;
+  border: 2px solid var(--ink);
+  padding: 0 0.35rem;
+  font-weight: 700;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  background: #fff;
+}
+
+.glance__frame.f-invasion,
+.glance__frame.f-attack-assault {
+  background: #f6c7c3;
+}
+
+.glance__frame.f-special-operation {
+  background: #121820;
+  color: var(--cream);
+}
+
+.glance__frame.f-civil-war,
+.glance__frame.f-war {
+  background: var(--yellow);
+}
+
+.glance__frame.f-war-of-liberation,
+.glance__frame.f-revolution-uprising,
+.glance__frame.f-class-war {
+  background: #c9e3c3;
+}
+
+.glance__sub {
+  margin: 1.1rem 0 0.4rem;
+  font-family: var(--font-poster);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--ink);
+}
+
+.glance__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.glance__timeline li {
+  display: grid;
+  grid-template-columns: 6.5rem 2.6rem 1fr;
+  gap: 0.5rem;
+}
+
+.glance__date {
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.glance__lang {
+  background: var(--ink);
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 0.7rem;
+  text-align: center;
+  align-self: start;
+  padding: 0.05rem 0;
+}
+
+.glance__timeline em {
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--ink);
+  color: var(--cream);
+  padding: 0 0.3rem;
+  margin-left: 0.3rem;
+}
+
+.glance__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  margin: 0 0 0.9rem;
+}
+
+.glance__ask {
+  border: 3px solid var(--ink);
+  background: var(--yellow);
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 1rem;
+  padding: 0.45rem 0.9rem;
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+}
+
+.glance__ask:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.glance__hint {
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.glance__link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  color: inherit;
+}
+
+.insight {
+  border: 3px solid var(--ink);
+  background: #fff;
+  padding: 0.8rem 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.insight__headline {
+  margin: 0 0 0.6rem;
+  font-family: var(--font-read);
+  font-size: 1.15rem;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.insight__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.6rem 1.2rem;
+}
+
+.insight__cols h4 {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-poster);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--ink);
+}
+
+.insight__cols ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.glance__why {
+  font-size: 0.75rem;
+  color: #555;
+  white-space: nowrap;
+}
+
+.glance__talk {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.glance__add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.8rem 0 0;
+  font-size: 0.8rem;
+}
+
+.glance__add > span {
+  font-weight: 700;
+  margin-right: 0.2rem;
+}
+
+.glance__add button:not(.glance__link) {
+  border: 1.5px solid var(--ink);
+  background: #fff;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  cursor: pointer;
+}
+
+.glance__ask.is-alt {
+  background: #fff;
+}
+
+.persp {
+  border: 3px solid var(--ink);
+  background: #fff;
+  padding: 0.8rem 0.9rem;
+  margin: 0 0 1rem;
+}
+
+.persp__table {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  min-width: 100%;
+}
+
+.persp__table th,
+.persp__table td {
+  border: 1px solid var(--cream-dim);
+  padding: 0.35rem 0.45rem;
+  vertical-align: top;
+  text-align: left;
+  min-width: 8.5rem;
+  line-height: 1.35;
+}
+
+.persp__table thead th {
+  background: var(--ink);
+  color: var(--cream);
+  min-width: 0;
+}
+
+.persp__table tbody th {
+  background: #fbefb8;
+  min-width: 9rem;
+}
+
+.persp__table td.is-missing {
+  color: #999;
+  font-style: italic;
+  background: #f7f5ef;
+}
+
+.persp__fought td,
+.persp__fought th {
+  border-top: 2px solid var(--ink);
+}
+
+.attn {
+  margin: 0 0 1rem;
+}
+
+.attn__row {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr 9.5rem;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.attn__lang {
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.attn__svg {
+  width: 100%;
+  height: 26px;
+  display: block;
+}
+
+.attn__grid {
+  stroke: var(--cream-dim);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.attn__line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.attn__peak {
+  stroke: #d0021b;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.attn__years {
+  position: relative;
+  height: 14px;
+  font-size: 10px;
+  color: #666;
+}
+
+.attn__years span {
+  position: absolute;
+  top: 0;
+  padding-left: 2px;
+}
+
+.attn__note {
+  font-size: 0.72rem;
+  color: #555;
+}
+

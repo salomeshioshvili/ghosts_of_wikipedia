@@ -7,6 +7,11 @@ import type {
   TimelinePayload,
   Biography,
   LangCompare,
+  WebEcho,
+  LiveNow,
+  LangInsight,
+  WordShift,
+  LangPerspectives,
 } from './types'
 
 import articlesFeatured from '../../../mock/articles_featured.json'
@@ -158,4 +163,71 @@ export async function saveComparison(title: string, lang: string, report: LangCo
     body: JSON.stringify({ title, lang, report }),
   })
   if (!res.ok) throw new Error(`save failed: ${res.status}`)
+}
+
+/** Context.dev live web search: does the web still say this deleted sentence? */
+export async function getWebEcho(pageId: number, hash: string, refresh = false): Promise<WebEcho> {
+  const res = await fetch(`/api/ghosts/${pageId}/${hash}/web${refresh ? '?refresh=1' : ''}`)
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { detail?: string } | null
+    throw new Error(body?.detail ?? `HTTP ${res.status}`)
+  }
+  return (await res.json()) as WebEcho
+}
+
+/** Live now (Context.dev scrape): today's article compared with the end of our history. */
+export async function getLiveNow(pageId: number, refresh = false): Promise<LiveNow> {
+  const res = await fetch(`/api/articles/${pageId}/live${refresh ? '?refresh=1' : ''}`)
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { detail?: string } | null
+    throw new Error(body?.detail ?? `HTTP ${res.status}`)
+  }
+  return (await res.json()) as LiveNow
+}
+
+/** "What could this mean?": Gemma's careful reading of how the language editions differ. */
+export async function interpretComparison(
+  title: string,
+  lang: string,
+  evidence: unknown,
+  refresh = false,
+): Promise<LangInsight> {
+  const res = await fetch('/api/languages/interpret', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, lang, evidence, refresh }),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { detail?: string } | null
+    throw new Error(body?.detail ?? `HTTP ${res.status}`)
+  }
+  return (await res.json()) as LangInsight
+}
+
+/** Words over time: what an article stopped saying vs kept saying, and each word's use per year. */
+export async function getWordShift(pageId: number, refresh = false): Promise<WordShift> {
+  const res = await fetch(`/api/articles/${pageId}/words${refresh ? '?refresh=1' : ''}`)
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { detail?: string } | null
+    throw new Error(body?.detail ?? `HTTP ${res.status}`)
+  }
+  return (await res.json()) as WordShift
+}
+
+export async function trackWord(pageId: number, word: string): Promise<{ word: string; stem: string; years: number[]; series: number[] }> {
+  return fromApi(`/api/articles/${pageId}/words/track?word=${encodeURIComponent(word)}`)
+}
+
+/** Perspectives: what each edition's opening section says, compared point by point (Gemma). */
+export async function comparePerspectives(title: string, lang: string, editions: unknown, refresh = false): Promise<LangPerspectives> {
+  const res = await fetch('/api/languages/perspectives', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, lang, editions, refresh }),
+  })
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { detail?: string } | null
+    throw new Error(body?.detail ?? `HTTP ${res.status}`)
+  }
+  return (await res.json()) as LangPerspectives
 }

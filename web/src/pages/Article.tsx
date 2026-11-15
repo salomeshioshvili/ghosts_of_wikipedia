@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Biography } from '../components/Biography'
 import { Certificate } from '../components/Certificate'
 import { GhostLayer } from '../components/GhostLayer'
+import { LivePanel } from '../components/LivePanel'
+import { WordsPanel } from '../components/WordsPanel'
 import { TimeSlider } from '../components/TimeSlider'
 import {
   formatDate,
@@ -43,12 +45,16 @@ export function Article() {
   const [playing, setPlaying] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [bio, setBio] = useState<BiographyData | null>(null)
+  const [liveOpen, setLiveOpen] = useState(false)
+  const [wordsOpen, setWordsOpen] = useState(false)
 
   useEffect(() => {
     setArticle(null)
     setTimeline(null)
     setLoadError(null)
     setBio(null)
+    setLiveOpen(false)
+    setWordsOpen(false)
     void getBiography(Number(pageId)).then(setBio)
     // The first visit to an article processes its whole edit history on the server, so this can take a while.
     void getArticle(Number(pageId))
@@ -256,6 +262,22 @@ export function Article() {
             >
               Other languages
             </Link>
+            <button
+              type="button"
+              className={`chip ${liveOpen ? 'is-on' : ''}`}
+              onClick={() => setLiveOpen((v) => !v)}
+              title="Compare today's live Wikipedia with the end of our history (Context.dev)"
+            >
+              Live now
+            </button>
+            <button
+              type="button"
+              className={`chip ${wordsOpen ? 'is-on' : ''}`}
+              onClick={() => setWordsOpen((v) => !v)}
+              title="What this article stopped saying, what it kept saying, and how each word's use changed by year"
+            >
+              Words over time
+            </button>
             {(['en', 'fi', 'both'] as LangMode[]).map((mode) => (
               <button
                 key={mode}
@@ -290,6 +312,8 @@ export function Article() {
             <p className="article__title-en">{article.title_en}</p>
           )}
           <p className="article__asof">{formatDate(timeline.frames[frameIndex]?.ts ?? article.as_of)}</p>
+          {wordsOpen && <WordsPanel pageId={Number(pageId)} onClose={() => setWordsOpen(false)} />}
+          {liveOpen && <LivePanel pageId={Number(pageId)} lang={lang} onClose={() => setLiveOpen(false)} />}
           {bio && bio.chapters.length > 0 && (
             <Biography
               data={bio}

@@ -619,3 +619,399 @@ a.chip {
   color: var(--ink);
   text-decoration: none;
 }
+
+/* Context.dev: does the web still say it? */
+.web-echo {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  border: 2px solid var(--ink);
+  background: #fff;
+}
+
+.web-echo__title {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-poster);
+  letter-spacing: 0.04em;
+}
+
+.web-echo__go,
+.web-echo__again {
+  border: 2px solid var(--ink);
+  background: var(--yellow);
+  color: var(--ink);
+  font-weight: 700;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
+
+.web-echo__again {
+  padding: 0 0.35rem;
+  font-size: 0.75rem;
+}
+
+.web-echo__verdict {
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.web-echo__verdict.is-still_said {
+  background: #fbefb8;
+  padding: 0.3rem 0.4rem;
+}
+
+.web-echo__list {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.web-echo__list a {
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+  border-left: 3px solid var(--ink);
+  padding-left: 0.5rem;
+}
+
+.web-echo__list a:hover .web-echo__page {
+  text-decoration: underline;
+}
+
+.web-echo__domain {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #555;
+}
+
+.web-echo__page {
+  display: block;
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.web-echo__muted {
+  margin: 0.4rem 0 0;
+  font-size: 0.72rem;
+  color: #555;
+}
+
+/* Live now: today's Wikipedia vs our history (Context.dev) */
+.live {
+  margin: 0 0 1.25rem;
+  border: 3px solid var(--ink);
+  background: #fff;
+  box-shadow: 5px 5px 0 var(--yellow-deep, var(--ink));
+}
+
+.live__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--ink);
+  color: var(--cream);
+}
+
+.live__title {
+  font-family: var(--font-poster);
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.live__title::before {
+  content: '';
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  background: #e5484d;
+  vertical-align: middle;
+}
+
+.live__meta {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.live__close {
+  margin-left: auto;
+  border: 2px solid var(--cream);
+  background: none;
+  color: var(--cream);
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.live__status,
+.live__summary,
+.live__warn,
+.live__foot {
+  margin: 0;
+  padding: 0.6rem 0.75rem 0;
+  line-height: 1.45;
+}
+
+.live__summary {
+  font-size: 0.95rem;
+}
+
+.live__warn {
+  font-size: 0.8rem;
+  color: #8a4b00;
+}
+
+.live__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem 0;
+}
+
+.live__tabs button,
+.live__foot button {
+  border: 2px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+}
+
+.live__tabs button.is-on {
+  background: var(--yellow);
+}
+
+.live__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.6rem 0.75rem 0;
+  display: grid;
+  gap: 0.45rem;
+  max-height: 18rem;
+  overflow-y: auto;
+  font-family: var(--font-read);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.live__ghost {
+  border: 2px dashed var(--ink);
+  padding: 0.35rem 0.5rem;
+  font-style: italic;
+  background: #f4efe2;
+}
+
+.live__new {
+  border-left: 4px solid #2f9e44;
+  padding-left: 0.5rem;
+}
+
+.live__before {
+  display: block;
+  text-decoration: line-through;
+  color: #666;
+}
+
+.live__after {
+  display: block;
+}
+
+.live__empty {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.live__foot {
+  padding-bottom: 0.7rem;
+  font-size: 0.75rem;
+  color: #555;
+}
+
+.live__foot a {
+  color: var(--ink);
+}
+
+/* Words over time */
+.words {
+  margin: 0 0 1.25rem;
+  border: 3px solid var(--ink);
+  background: #fff;
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.words__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--yellow);
+  border-bottom: 3px solid var(--ink);
+}
+
+.words__title {
+  font-family: var(--font-poster);
+  font-size: 1.1rem;
+  letter-spacing: 0.04em;
+}
+
+.words__meta {
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.words__close {
+  margin-left: auto;
+  border: 2px solid var(--ink);
+  background: #fff;
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.words__status,
+.words__lede,
+.words__foot {
+  margin: 0;
+  padding: 0.6rem 0.75rem 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.words__foot {
+  padding-bottom: 0.7rem;
+  font-size: 0.72rem;
+  color: #555;
+}
+
+.words__cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.8rem;
+  padding: 0.6rem 0.75rem 0;
+}
+
+.words__list h4 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-poster);
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--ink);
+}
+
+.words__list.is-died h4 {
+  color: #b02a2f;
+}
+
+.words__list ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.3rem;
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.words__list button {
+  width: 100%;
+  text-align: left;
+  border: 2px solid var(--ink);
+  background: #fff;
+  padding: 0.25rem 0.45rem;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.words__list.is-died button {
+  border-style: dashed;
+}
+
+.words__list button.is-on {
+  background: #fbefb8;
+}
+
+.words__en {
+  color: #555;
+  font-style: italic;
+}
+
+.words__nums {
+  display: block;
+  font-size: 0.7rem;
+  color: #555;
+}
+
+.words__example {
+  margin: 0.15rem 0 0.2rem 0.5rem;
+  font-family: var(--font-read);
+  font-style: italic;
+  font-size: 0.75rem;
+  color: #444;
+  line-height: 1.35;
+}
+
+.words__chart {
+  margin: 0.7rem 0.75rem 0;
+}
+
+.words__chart svg {
+  width: 100%;
+  height: auto;
+  background: #fbfaf6;
+  border: 2px solid var(--ink);
+}
+
+.words__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+}
+
+.words__legend i {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.3rem;
+  vertical-align: -1px;
+  border: 1px solid var(--ink);
+}
+
+.words__unit {
+  color: #666;
+}
+
+.words__track {
+  display: flex;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem 0;
+}
+
+.words__track input {
+  flex: 1;
+  border: 2px solid var(--ink);
+  padding: 0.35rem 0.5rem;
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.words__track button {
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: var(--cream);
+  font-weight: 700;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+}
