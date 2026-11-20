@@ -53,4 +53,5 @@ System-versioned tables (`sentence_life`, and `lang_compare`, which keeps every 
 | `docs/` | build doc, pitch, video script, Codex log | everyone |
 
 ## Licence and credit
-Wikipedia text: CC BY-SA 4.0, credit Wikipedia and its authors; every result links to its revision. Hero article list from MariaDB's time-machine demo (MIT).
+**Code:** [MIT](LICENSE) © 2026 Chrysalis.  
+**Wikipedia text:** CC BY-SA 4.0, credit Wikipedia and its authors; every result links to its revision. Hero article list from MariaDB's time-machine demo (MIT).
